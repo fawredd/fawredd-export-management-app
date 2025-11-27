@@ -1,0 +1,286 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  auditLogs AuditLog[]
+}
+
+enum Role {
+  ADMIN
+  TRADER
+  MANUFACTURER
+  CLIENT
+}
+
+// ============================================
+// PROVIDERS & CLIENTS
+// ============================================
+
+model Provider {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxId     String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Client {
+  id            String    @id @default(cuid())
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  taxId         String?
+  convertedFrom String?   // Track if converted from prospect (budget shareToken)
+  budgets       Budget[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================
+// PRODUCTS & CATALOG
+// ============================================
+
+model Product {
+  id               String          @id @default(cuid())
+  sku              String          @unique
+  title            String
+  description      String?
+  imageUrls        String[]        // Product photos
+  isPublic         Boolean         @default(false) // Visibility in public catalog
+  weightKg         Float?
+  volumeM3         Float?
+  composition      String?
+  tariffPosition   TariffPosition? @relation(fields: [tariffPositionId], references: [id])
+  tariffPositionId String?
+  unit             UnitOfMeasure?  @relation(fields: [unitId], references: [id])
+  unitId           String?
+  provider         Provider?       @relation(fields: [providerId], references: [id])
+  providerId       String?
+  priceHistory     PriceHistory[]
+  taxes            Tax[]
+  exportTasks      ExportTask[]
+  budgetItems      BudgetItem[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model TariffPosition {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  description String
+  dutyRate    Decimal?  @db.Decimal(8, 4)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model UnitOfMeasure {
+  id           String    @id @default(cuid())
+  name         String
+  abbreviation String    @unique
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model PriceHistory {
+  id        String    @id @default(cuid())
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  type      PriceType
+  value     Decimal   @db.Decimal(20, 6)
+  date      DateTime  @default(now())
+  createdAt DateTime  @default(now())
+}
+
+enum PriceType {
+  COST
+  SELLING
+}
+
+model Tax {
+  id         String  @id @default(cuid())
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  name       String
+  percentage Decimal @db.Decimal(8, 4)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ============================================
+// EXPORT TASKS & COUNTRIES
+// ============================================
+
+model ExportTask {
+  id          String    @id @default(cuid())
+  description String
+  status      TaskStatus @default(PENDING)
+  country     Country   @relation(fields: [countryId], references: [id])
+  countryId   String
+  products    Product[]
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Country {
+  id          String       @id @default(cuid())
+  name        String
+  code        String       @unique
+  exportTasks ExportTask[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// ============================================
+// COSTS
+// ============================================
+
+model Cost {
+  id          String   @id @default(cuid())
+  type        CostType
+  description String?
+  value       Decimal  @db.Decimal(20, 6)
+  budgets     Budget[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum CostType {
+  FIXED
+  VARIABLE
+  FREIGHT
+  INSURANCE
+}
+
+// ============================================
+// BUDGETS & BUDGET ITEMS
+// ============================================
+
+model Budget {
+  id           String        @id @default(cuid())
+  client       Client        @relation(fields: [clientId], references: [id])
+  clientId     String
+  incoterm     Incoterm
+  status       BudgetStatus  @default(DRAFT)
+  totalAmount  Decimal?      @db.Decimal(20, 6)
+  shareToken   String?       @unique // For public sharing
+  expiresAt    DateTime?     // Optional expiration for shared link
+  viewCount    Int           @default(0) // Track views
+  acceptedAt   DateTime?     // When budget was accepted
+  acceptedBy   String?       // Prospect email/name who accepted
+  budgetItems  BudgetItem[]
+  costs        Cost[]
+  invoices     Invoice[]
+  packingLists PackingList[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum Incoterm {
+  FOB
+  CIF
+}
+
+enum BudgetStatus {
+  DRAFT
+  SENT            // Budget has been shared with prospect
+  VIEWED          // Prospect has viewed the budget
+  PENDING_APPROVAL
+  APPROVED        // Accepted by prospect/client
+  REJECTED
+  EXPIRED         // Share link expired
+  INVOICED
+}
+
+model BudgetItem {
+  id             String  @id @default(cuid())
+  budget         Budget  @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  budgetId       String
+  product        Product @relation(fields: [productId], references: [id])
+  productId      String
+  quantity       Int
+  unitPrice      Decimal @db.Decimal(20, 6)
+  proratedCosts  Decimal @db.Decimal(20, 6) @default(0)
+  duties         Decimal @db.Decimal(20, 6) @default(0)
+  freight        Decimal @db.Decimal(20, 6) @default(0)
+  insurance      Decimal @db.Decimal(20, 6) @default(0)
+  totalLine      Decimal @db.Decimal(20, 6)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ============================================
+// INVOICES & PACKING LISTS
+// ============================================
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  budget        Budget   @relation(fields: [budgetId], references: [id])
+  budgetId      String
+  pdfUrl        String?
+  totalAmount   Decimal  @db.Decimal(20, 6)
+  issueDate     DateTime @default(now())
+  dueDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PackingList {
+  id        String   @id @default(cuid())
+  budget    Budget   @relation(fields: [budgetId], references: [id])
+  budgetId  String
+  details   Json
+  pdfUrl    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  action    String
+  resource  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
