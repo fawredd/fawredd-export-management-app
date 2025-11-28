@@ -106,12 +106,12 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample export tasks
-INSERT INTO "ExportTask" (id, title, description, status, "dueDate", "completedAt", "countryId", "createdAt", "updatedAt")
+INSERT INTO "ExportTask" (id, description, status, "dueDate", "completedAt", "countryId", "createdAt", "updatedAt")
 VALUES 
-  ('task001', 'Certificate of Origin - USA', 'Obtain certificate of origin for coffee export to USA', 'IN_PROGRESS', NOW() + INTERVAL '7 days', NULL, 'country001', NOW(), NOW()),
-  ('task002', 'Phytosanitary Certificate - Brazil', 'Get phytosanitary certificate for wine export', 'PENDING', NOW() + INTERVAL '14 days', NULL, 'country002', NOW(), NOW()),
-  ('task003', 'Quality Inspection - China', 'Schedule quality inspection for leather goods', 'COMPLETED', NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days', 'country003', NOW(), NOW()),
-  ('task004', 'Customs Documentation - Germany', 'Prepare customs documentation package', 'IN_PROGRESS', NOW() + INTERVAL '10 days', NULL, 'country004', NOW(), NOW())
+  ('task001', 'Certificate of Origin - USA: Obtain certificate of origin for coffee export to USA', 'IN_PROGRESS', NOW() + INTERVAL '7 days', NULL, 'country001', NOW(), NOW()),
+  ('task002', 'Phytosanitary Certificate - Brazil: Get phytosanitary certificate for wine export', 'PENDING', NOW() + INTERVAL '14 days', NULL, 'country002', NOW(), NOW()),
+  ('task003', 'Quality Inspection - China: Schedule quality inspection for leather goods', 'COMPLETED', NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days', 'country003', NOW(), NOW()),
+  ('task004', 'Customs Documentation - Germany: Prepare customs documentation package', 'IN_PROGRESS', NOW() + INTERVAL '10 days', NULL, 'country004', NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Link export tasks with products (many-to-many)
@@ -128,12 +128,12 @@ ON CONFLICT DO NOTHING;
 INSERT INTO "Budget" (id, "clientId", incoterm, "totalAmount", status, "createdAt", "updatedAt")
 VALUES 
   ('budget001', 'client001', 'FOB', 15000.00, 'APPROVED', NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days'),
-  ('budget002', 'client002', 'CIF', 25000.00, 'PENDING', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
-  ('budget003', 'client003', 'EXW', 8500.00, 'APPROVED', NOW() - INTERVAL '10 days', NOW() - INTERVAL '7 days')
+  ('budget002', 'client002', 'CIF', 25000.00, 'PENDING_APPROVAL', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+  ('budget003', 'client003', 'FOB', 8500.00, 'APPROVED', NOW() - INTERVAL '10 days', NOW() - INTERVAL '7 days')
 ON CONFLICT DO NOTHING;
 
 -- Insert budget items
-INSERT INTO "BudgetItem" (id, "budgetId", "productId", quantity, "unitPrice", "totalPrice", "createdAt", "updatedAt")
+INSERT INTO "BudgetItem" (id, "budgetId", "productId", quantity, "unitPrice", "totalLine", "createdAt", "updatedAt")
 VALUES 
   ('budgetitem001', 'budget001', 'product001', 100, 75.00, 7500.00, NOW(), NOW()),
   ('budgetitem002', 'budget001', 'product002', 50, 200.00, 10000.00, NOW(), NOW()),
@@ -154,10 +154,10 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample invoices
-INSERT INTO "Invoice" (id, "invoiceNumber", "budgetId", "issueDate", "dueDate", "pdfUrl", "createdAt", "updatedAt")
+INSERT INTO "Invoice" (id, "invoiceNumber", "budgetId", "totalAmount", "issueDate", "dueDate", "pdfUrl", "createdAt", "updatedAt")
 VALUES 
-  ('invoice001', 'INV-2024-001', 'budget001', NOW() - INTERVAL '2 days', NOW() + INTERVAL '28 days', NULL, NOW(), NOW()),
-  ('invoice002', 'INV-2024-002', 'budget003', NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days', NULL, NOW(), NOW())
+  ('invoice001', 'INV-2024-001', 'budget001', 15000.00, NOW() - INTERVAL '2 days', NOW() + INTERVAL '28 days', NULL, NOW(), NOW()),
+  ('invoice002', 'INV-2024-002', 'budget003', 8500.00, NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days', NULL, NOW(), NOW())
 ON CONFLICT ("invoiceNumber") DO NOTHING;
 
 -- Insert sample packing lists

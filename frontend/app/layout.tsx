@@ -16,9 +16,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-	const initialTheme = 'light'; // Default theme
   return (
-    <html lang="en" className={initialTheme}>
+    <html lang="en" suppressHydrationWarning>
       <body className={`bg-background text-foreground`}>
         <Providers>
           <AppLayout>
