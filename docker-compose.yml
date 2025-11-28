@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:17-alpine
     container_name: my-postgres
     environment:
       POSTGRES_USER: postgres
@@ -17,12 +17,27 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: my_radis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build: ./backend
     container_name: export_backend
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     env_file:
       - .env
@@ -59,3 +74,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:

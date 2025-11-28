@@ -4,10 +4,15 @@
 -- Note: User passwords should be hashed with bcrypt in the actual application
 -- The password below is a placeholder and should be replaced with a properly hashed password
 
--- Insert admin user (password: Admin123! - should be hashed in production)
+-- Users password is Admin123! for all of them.
+
 INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
 VALUES 
   ('admin001', 'admin@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'System Administrator', 'ADMIN', NOW(), NOW())
+ON CONFLICT (email) DO NOTHING;
+INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
+VALUES 
+  ('manufacturer001', 'man01@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'MANUFACTURER', 'MANUFACTURER', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample countries

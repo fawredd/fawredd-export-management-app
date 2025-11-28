@@ -3,12 +3,25 @@
  */
 
 import { PrismaClient, User, Role } from '@prisma/client';
+import redisClient from '@/utils/redis-client';
 
 const prisma = new PrismaClient();
+const CACHE_TTL = 60 * 60 * 24;
+const CACHE_KEY = 'users';
 
 export class UserRepository {
   async findById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { id } });
+    const cachedUser = await redisClient.get(`${CACHE_KEY}:${id}`);
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (user) {
+      await redisClient.set(`${CACHE_KEY}:${id}`, JSON.stringify(user), {
+        EX: CACHE_TTL,
+      });
+    }
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
