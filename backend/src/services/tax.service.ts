@@ -1,5 +1,7 @@
 import taxRepository from '../repositories/tax.repository';
-import productRepository from '../repositories/product.repository';
+import { ProductRepository } from '../repositories/product.repository';
+
+const productRepository = new ProductRepository();
 import { CreateTaxInput, UpdateTaxInput } from '../schemas/tax.schema';
 
 /**

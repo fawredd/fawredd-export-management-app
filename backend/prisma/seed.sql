@@ -92,7 +92,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
 VALUES 
   ('trader001', 'trader@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'John Trader', 'TRADER', NOW(), NOW()),
-  ('manufacturer001', 'manufacturer@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Maria Manufacturer', 'MANUFACTURER', NOW(), NOW()),
+  ('manufacturer002', 'manufacturer@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Maria Manufacturer', 'MANUFACTURER', NOW(), NOW()),
   ('client001user', 'client@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Client User', 'CLIENT', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 

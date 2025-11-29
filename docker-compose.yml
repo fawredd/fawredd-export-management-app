@@ -43,6 +43,7 @@ services:
       - .env
     environment:
       - PORT=${BACKEND_PORT}
+      - REDIS_URL=redis://redis:6379
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     extra_hosts:

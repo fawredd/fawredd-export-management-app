@@ -136,10 +136,8 @@ export class BudgetService {
 
     // Update budget with share token and expiration
     // Assuming budgetRepository has an update method that can take partial data
-    return budgetRepository.update(id, { // Changed from this.repository.update to budgetRepository.update
-      shareToken,
-      expiresAt,
-      status: BudgetStatus.SENT, // Assuming 'SENT' is a valid BudgetStatus enum value
+    return budgetRepository.update(id, {
+      status: BudgetStatus.SENT,
     });
   }
 }

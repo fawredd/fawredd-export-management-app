@@ -21,11 +21,11 @@
   },
   "include": ["src/**/*","__tests__/**/*.ts"],
   "exclude": [
-	"node_modules",
-	"dist",
-	"**/*.test.ts",
-	"jest.config.js",
-	"eslint.config.mjs"
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "jest.config.js",
+    "eslint.config.mjs"
   ],
   "ts-node": {
     "transpileOnly": true,

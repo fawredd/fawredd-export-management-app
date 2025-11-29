@@ -94,8 +94,8 @@ export class ExportTaskRepository {
         ...taskData,
         products: productIds
           ? {
-              connect: productIds.map((id) => ({ id })),
-            }
+            connect: productIds.map((id) => ({ id })),
+          }
           : undefined,
       },
       include: {
@@ -127,8 +127,8 @@ export class ExportTaskRepository {
         ...updateData,
         products: productIds
           ? {
-              set: productIds.map((id) => ({ id })),
-            }
+            set: productIds.map((id) => ({ id })),
+          }
           : undefined,
       },
       include: {
@@ -166,6 +166,24 @@ export class ExportTaskRepository {
   async findByCountry(countryId: string) {
     return prisma.exportTask.findMany({
       where: { countryId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        products: {
+          select: {
+            id: true,
+            sku: true,
+            title: true,
+          },
+        },
+      },
+    });
+  }
+  /**
+   * Find tasks by status
+   */
+  async findByStatus(status: TaskStatus) {
+    return prisma.exportTask.findMany({
+      where: { status },
       orderBy: { createdAt: 'desc' },
       include: {
         products: {

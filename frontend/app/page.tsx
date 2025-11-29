@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-import  { queryClient } from "@/lib/query-client"
+import { queryClient } from "@/lib/query-client"
 import { useQuery } from "@tanstack/react-query"
 
 import { apiClient } from "@/lib/api-client"
@@ -16,17 +16,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function DashboardPage() {
   const router = useRouter()
 
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      router.push("/login")
-    }
-  }, [router])
+  // Auth check handled by middleware
+
 
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: () => apiClient.getProducts(),
-  },queryClient)
+  }, queryClient)
 
   const { data: clients } = useQuery({
     queryKey: ["clients"],
@@ -105,8 +101,8 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Total Revenue"
-            value={`$${totalRevenue.toLocaleString()}`}
-            subtitle={`Current Month : $${currentMonthRevenue.toLocaleString()}`}
+            value={`$${totalRevenue.toLocaleString('en-US')}`}
+            subtitle={`Current Month : $${currentMonthRevenue.toLocaleString('en-US')}`}
           />
         </div>
 

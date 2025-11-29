@@ -16,27 +16,15 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true, // Important for cookies
     });
-
-    // Request interceptor to add auth token
-    this.client.interceptors.request.use(
-      (config) => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
 
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          this.clearToken();
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
             window.location.href = '/login';
           }
         }
@@ -45,43 +33,27 @@ class ApiClient {
     );
   }
 
-  private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
-  }
-
-  private setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-    }
-  }
-
-  private clearToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-    }
-  }
-
   // Auth endpoints
   async register(data: { email: string; password: string; name?: string }): Promise<{ user: User; token: string }> {
     const response: { data: { user: User; token: string } } = await this.client.post('/api/auth/register', data);
-    this.setToken(response.data.token);
     return response.data;
   }
 
   async login(data: { email: string; password: string }): Promise<{ user: User; token: string }> {
     const response: { data: { user: User; token: string } } = await this.client.post('/api/auth/login', data);
-    this.setToken(response.data.token);
     return response.data;
   }
 
   async getCurrentUser() {
-    const response: { data: User } = await this.client.get('/api/auth/me');
-    return response.data;
+    const response: { data: { user: User } } = await this.client.get('/api/auth/me');
+    return response.data.user;
   }
 
-  logout() {
-    this.clearToken();
+  async logout() {
+    await this.client.post('/api/auth/logout');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
   }
 
   // User management endpoints (Admin only)
@@ -141,7 +113,7 @@ class ApiClient {
     files.forEach(file => {
       formData.append('images', file);
     });
-    
+
     const response = await this.client.post(`/api/products/${id}/images`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

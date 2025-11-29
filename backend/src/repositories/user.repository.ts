@@ -3,7 +3,7 @@
  */
 
 import { PrismaClient, User, Role } from '@prisma/client';
-import redisClient from '@/utils/redis-client';
+import redisClient from '../utils/redis-client';
 
 const prisma = new PrismaClient();
 const CACHE_TTL = 60 * 60 * 24;

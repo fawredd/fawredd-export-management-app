@@ -1,5 +1,7 @@
 import priceHistoryRepository from '../repositories/price-history.repository';
-import productRepository from '../repositories/product.repository';
+import { ProductRepository } from '../repositories/product.repository';
+
+const productRepository = new ProductRepository();
 import { CreatePriceHistoryInput, PriceType } from '../schemas/price-history.schema';
 
 /**

@@ -91,4 +91,16 @@ router.post('/login', validate(loginSchema), authController.login.bind(authContr
  */
 router.get('/me', authenticate, authController.me.bind(authController));
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.post('/logout', authController.logout.bind(authController));
+
 export default router;
