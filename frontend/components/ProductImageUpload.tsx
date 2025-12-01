@@ -30,20 +30,53 @@ export function ProductImageUpload({ productId, currentImages = [], onImagesChan
     e.stopPropagation();
     setDragActive(false);
 
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
-    );
+    const files = Array.from(e.dataTransfer.files);
+    const validFiles = validateFiles(files);
 
-    if (files.length > 0) {
-      await uploadFiles(files);
+    if (validFiles.length > 0) {
+      await uploadFiles(validFiles);
     }
   }, [productId]);
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await uploadFiles(Array.from(files));
+      const validFiles = validateFiles(Array.from(files));
+      if (validFiles.length > 0) {
+        await uploadFiles(validFiles);
+      }
     }
+  };
+
+  const validateFiles = (files: File[]): File[] => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxImages = 10;
+
+    if (images.length >= maxImages) {
+      alert(`Maximum ${maxImages} images allowed per product`);
+      return [];
+    }
+
+    const validFiles = files.filter(file => {
+      if (!allowedTypes.includes(file.type)) {
+        alert(`${file.name}: Only JPG, PNG, and WebP images are allowed`);
+        return false;
+      }
+      if (file.size > maxSize) {
+        alert(`${file.name}: File size must be less than 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    const remainingSlots = maxImages - images.length;
+    if (validFiles.length > remainingSlots) {
+      alert(`You can only upload ${remainingSlots} more image(s)`);
+      return validFiles.slice(0, remainingSlots);
+    }
+
+    return validFiles;
   };
 
   const uploadFiles = async (files: File[]) => {
@@ -81,11 +114,10 @@ export function ProductImageUpload({ productId, currentImages = [], onImagesChan
     <div className="space-y-4">
       {/* Upload Area */}
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
-        }`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
+          ? 'border-blue-500 bg-blue-50'
+          : 'border-gray-300 hover:border-gray-400'
+          }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -95,7 +127,7 @@ export function ProductImageUpload({ productId, currentImages = [], onImagesChan
           type="file"
           id="file-upload"
           multiple
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={handleFileInput}
           className="hidden"
           disabled={uploading}
@@ -108,7 +140,7 @@ export function ProductImageUpload({ productId, currentImages = [], onImagesChan
           <p className="text-sm text-gray-600 mb-1">
             <span className="font-semibold text-blue-600">Click to upload</span> or drag and drop
           </p>
-          <p className="text-xs text-gray-500">PNG, JPG, GIF, WEBP up to 5MB (max 5 images)</p>
+          <p className="text-xs text-gray-500">JPG, PNG, WEBP up to 5MB (max 10 images)</p>
         </label>
       </div>
 

@@ -31,7 +31,8 @@ export default function ProductsPage() {
   const [isCreatingTariff, setIsCreatingTariff] = useState(false)
   const [newTariffCode, setNewTariffCode] = useState("")
   const [newTariffDescription, setNewTariffDescription] = useState("")
-  
+  const [tariffCodeError, setTariffCodeError] = useState("")
+
   const [formData, setFormData] = useState({
     sku: "",
     title: "",
@@ -100,16 +101,27 @@ export default function ProductsPage() {
 
   const createTariffMutation = useMutation({
     mutationFn: (data: any) => apiClient.createTariffPosition(data),
-    onSuccess: (newTariff) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["tariff-positions"] })
+      // Extract the tariff position from the response
+      const newTariff = response.data || response
       setFormData({ ...formData, tariffPositionId: newTariff.id })
       setIsCreatingTariff(false)
       setNewTariffCode("")
       setNewTariffDescription("")
+      setTariffCodeError("")
       toast.success("Tariff position created successfully")
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to create tariff position")
+      // Handle validation errors from backend
+      if (error.response?.data?.details) {
+        const details = error.response.data.details
+        const errorMsg = details.map((d: any) => d.message).join(", ")
+        setTariffCodeError(errorMsg)
+        toast.error(errorMsg)
+      } else {
+        toast.error(error.response?.data?.message || error.message || "Failed to create tariff position")
+      }
     },
   })
 
@@ -157,9 +169,30 @@ export default function ProductsPage() {
     }
   }
 
+  const validateTariffCode = (code: string): string => {
+    if (!code) return ""
+    if (code.length < 4) return "Tariff code must be at least 4 characters"
+    if (code.length > 20) return "Tariff code must not exceed 20 characters"
+    if (!/^[0-9.]+$/.test(code)) return "Only numbers and dots allowed"
+    if (code.startsWith('.') || code.endsWith('.')) return "Cannot start or end with a dot"
+    if (code.includes('..')) return "Cannot contain consecutive dots"
+    return ""
+  }
+
+  const handleTariffCodeChange = (value: string) => {
+    setNewTariffCode(value)
+    setTariffCodeError(validateTariffCode(value))
+  }
+
   const handleCreateTariff = () => {
     if (!newTariffCode || !newTariffDescription) {
       toast.error("Please fill in tariff code and description")
+      return
+    }
+    const error = validateTariffCode(newTariffCode)
+    if (error) {
+      setTariffCodeError(error)
+      toast.error(error)
       return
     }
     createTariffMutation.mutate({
@@ -254,7 +287,7 @@ export default function ProductsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
             <DialogDescription>
@@ -321,7 +354,7 @@ export default function ProductsPage() {
                 onChange={(e) => setFormData({ ...formData, composition: e.target.value })}
               />
             </div>
-            
+
             {/* Tariff Position with Create Option */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -336,14 +369,26 @@ export default function ProductsPage() {
                   {isCreatingTariff ? "Cancel" : "+ Create New"}
                 </Button>
               </div>
-              
+
               {isCreatingTariff ? (
                 <div className="space-y-2 p-3 border rounded-md bg-muted/50">
-                  <Input
-                    placeholder="Tariff Code (e.g., 6204.62.00)"
-                    value={newTariffCode}
-                    onChange={(e) => setNewTariffCode(e.target.value)}
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      placeholder="Tariff Code (e.g., 6204.62.00)"
+                      value={newTariffCode}
+                      onChange={(e) => handleTariffCodeChange(e.target.value)}
+                      className={tariffCodeError ? "border-red-500" : ""}
+                    />
+                    {tariffCodeError && (
+                      <p className="text-xs text-red-600">{tariffCodeError}</p>
+                    )}
+                    {!tariffCodeError && newTariffCode && (
+                      <p className="text-xs text-green-600">✓ Valid format</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Format: XXXX.XX.XX (numbers and dots only)
+                    </p>
+                  </div>
                   <Input
                     placeholder="Description"
                     value={newTariffDescription}
@@ -353,7 +398,7 @@ export default function ProductsPage() {
                     type="button"
                     size="sm"
                     onClick={handleCreateTariff}
-                    disabled={createTariffMutation.isPending}
+                    disabled={createTariffMutation.isPending || !!tariffCodeError}
                   >
                     {createTariffMutation.isPending ? "Creating..." : "Create Tariff"}
                   </Button>
@@ -367,7 +412,7 @@ export default function ProductsPage() {
                     <SelectValue placeholder="Select tariff position" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tariffPositions?.map((tariff: any) => (
+                    {(Array.isArray(tariffPositions) ? tariffPositions : tariffPositions?.data)?.map((tariff: any) => (
                       <SelectItem key={tariff.id} value={tariff.id}>
                         {tariff.code} - {tariff.description}
                       </SelectItem>
@@ -388,7 +433,7 @@ export default function ProductsPage() {
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {units?.map((unit: any) => (
+                  {(Array.isArray(units) ? units : units?.data)?.map((unit: any) => (
                     <SelectItem key={unit.id} value={unit.id}>
                       {unit.name} ({unit.abbreviation})
                     </SelectItem>

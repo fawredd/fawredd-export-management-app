@@ -7,7 +7,13 @@ export const createTariffPositionSchema = z.object({
   code: z.string()
     .min(4, 'Tariff code must be at least 4 characters')
     .max(20, 'Tariff code must not exceed 20 characters')
-    .regex(/^[0-9.]+$/, 'Tariff code must contain only numbers and dots'),
+    .regex(/^[0-9.]+$/, 'Tariff code must contain only numbers and dots')
+    .refine((val) => !val.startsWith('.') && !val.endsWith('.'), {
+      message: 'Tariff code cannot start or end with a dot',
+    })
+    .refine((val) => !val.includes('..'), {
+      message: 'Tariff code cannot contain consecutive dots',
+    }),
   description: z.string()
     .min(3, 'Description must be at least 3 characters')
     .max(500, 'Description must not exceed 500 characters'),

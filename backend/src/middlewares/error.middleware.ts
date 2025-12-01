@@ -4,6 +4,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
 export class AppError extends Error {
   constructor(
@@ -25,11 +26,28 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     return;
   }
 
+  // Handle Zod validation errors
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      error: 'Validation Error',
+      message: 'Invalid input data',
+      details: err.errors.map((e) => ({
+        path: e.path.join('.'),
+        message: e.message,
+      })),
+    });
+    return;
+  }
+
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
+      // Extract the field name from the error meta
+      const target = err.meta?.target as string[] | undefined;
+      const fieldName = target?.[0] || 'field';
       res.status(409).json({
         error: 'Conflict',
-        message: 'A record with this unique field already exists',
+        message: `A record with this ${fieldName} already exists`,
+        field: fieldName,
       });
       return;
     }

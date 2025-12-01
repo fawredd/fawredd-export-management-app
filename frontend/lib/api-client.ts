@@ -263,6 +263,11 @@ class ApiClient {
     return response.data;
   }
 
+  // Alias for getUnits() to match frontend usage
+  async getUnitsOfMeasure() {
+    return this.getUnits();
+  }
+
   async getUnit(id: string) {
     const response = await this.client.get(`/api/units/${id}`);
     return response.data;
