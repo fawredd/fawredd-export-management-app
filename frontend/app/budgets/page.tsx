@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { useState } from "react"
 import { apiClient } from "@/lib/api-client"
 import { AppLayout } from "@/components/app-layout"
@@ -10,16 +10,21 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, FileText, MoreVertical, Eye } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { BudgetStatus } from "@/shared/types"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const statusColors: Record<BudgetStatus, string> = {
   DRAFT: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  SENT: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  VIEWED: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   PENDING_APPROVAL: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   APPROVED: "bg-green-500/10 text-green-500 border-green-500/20",
   REJECTED: "bg-red-500/10 text-red-500 border-red-500/20",
+  EXPIRED: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   INVOICED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
 }
 
@@ -31,6 +36,23 @@ export default function BudgetsPage() {
   const { data: budgets, isLoading } = useQuery({
     queryKey: ["budgets"],
     queryFn: () => apiClient.getBudgets(),
+  })
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: BudgetStatus }) =>
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/budgets/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgets"] })
+      toast.success("Budget status updated")
+    },
+    onError: () => {
+      toast.error("Failed to update status")
+    },
   })
 
   const filteredBudgets = budgets?.filter((budget: any) =>
@@ -101,9 +123,24 @@ export default function BudgetsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={statusColors[budget.status as BudgetStatus]}>
-                            {budget.status.replace("_", " ")}
-                          </Badge>
+                          <Select
+                            value={budget.status}
+                            onValueChange={(value) => updateStatusMutation.mutate({ id: budget.id, status: value as BudgetStatus })}
+                          >
+                            <SelectTrigger className={`w-[180px] ${statusColors[budget.status as BudgetStatus]}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="DRAFT">Draft</SelectItem>
+                              <SelectItem value="SENT">Sent</SelectItem>
+                              <SelectItem value="VIEWED">Viewed</SelectItem>
+                              <SelectItem value="PENDING_APPROVAL">Pending Approval</SelectItem>
+                              <SelectItem value="APPROVED">Approved</SelectItem>
+                              <SelectItem value="REJECTED">Rejected</SelectItem>
+                              <SelectItem value="EXPIRED">Expired</SelectItem>
+                              <SelectItem value="INVOICED">Invoiced</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(budget.createdAt).toLocaleDateString()}

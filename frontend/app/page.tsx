@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 
+
 import { queryClient } from "@/lib/query-client"
 import { useQuery } from "@tanstack/react-query"
 
@@ -16,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function DashboardPage() {
   const router = useRouter()
 
+  
   // Auth check handled by middleware
 
 
@@ -34,12 +36,28 @@ export default function DashboardPage() {
     queryFn: () => apiClient.getBudgets(),
   })
 
-  const totalUsers = 1250 // Placeholder - will be implemented later
-  const activeUsers = 950 // Placeholder
+  const { data: users } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiClient.getUsers(),
+  })
+
+  const totalUsers = users?.length || 0
+  const activeUsers = users?.length || 0 // Assuming all are active for now
   const totalProducts = products?.length || 0
-  const lowStockProducts = 50 // Placeholder
-  const totalRevenue = budgets?.reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0) || 0
-  const currentMonthRevenue = 25000 // Placeholder
+  const lowStockProducts = products?.filter((p: any) => (p.stock || 0) < 10).length || 0 // Assuming stock field exists or default to 0
+
+  // Calculate revenue from APPROVED or INVOICED budgets
+  const totalRevenue = budgets
+    ?.filter((b: any) => b.status === 'APPROVED' || b.status === 'INVOICED')
+    .reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0) || 0
+
+  const currentMonth = new Date().getMonth()
+  const currentMonthRevenue = budgets
+    ?.filter((b: any) => {
+      const budgetDate = new Date(b.createdAt)
+      return (b.status === 'APPROVED' || b.status === 'INVOICED') && budgetDate.getMonth() === currentMonth
+    })
+    .reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0) || 0
 
   const usersData = [
     { id: "T5YMLP5M", username: "@katwa0", email: "juliano@yahoo.ca" },
@@ -105,16 +123,6 @@ export default function DashboardPage() {
             subtitle={`Current Month : $${currentMonthRevenue.toLocaleString('en-US')}`}
           />
         </div>
-
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable data={usersData} columns={userColumns} />
-          </CardContent>
-        </Card>
       </div>
     </>
   )

@@ -2,20 +2,18 @@ CONTEXT:
 You are an expert full-stack TypeScript developer and architect (Next.js v^15, React v^19, Node/Express v^5, Prisma v^6/Postgres). This is a in development Docker-based monorepo for an export-management app used by Argentine manufacturers, traders and logistics stakeholders. Prioritize security, DX, and a great responsive UI/UX. The main goal is to provide a platform for merchandise export budgeting, where Manufacturers, Traders and Logistics stakeholders can create budgets from theirs products to export to the world from Argentina. Manufacturers can also load products data needed to create budgets. Manufacturers, Traders and Logistics stakeholders may also create proforma invoices and packing lists after a budget is accepted by a client. Also Prospects/Clients may watch Manufacturers,Traders products catalogs, budgets and invoices and ask for a budget of selected products (maybe a kind of shopping cart would be a good idea to implement this feature). If you have any questions, please ask me. You must ask for my approval before starting to implement any feature and describe the feature you are going to implement and how you are going to implement it.
 
 Primary goals:
-- Enable CRUD for Products, Providers, Clients, Tariff Positions, Units of Measure, Export Tasks (procedures), Costs (fixed/variable/freight/insurance), Budgets (incoterm-aware), Invoices and Packing Lists.
+- Enable CRUD for Products, Providers, Clients, Tariff Positions, Units of Measure, Export Tasks (procedures), Costs (fixed/variable), Budgets (incoterm-aware), Invoices and Packing Lists.
 - Provide frontend (Next.js 15 App Router + TypeScript + Tailwind + shadcn/ui) and backend (Express.js + TypeScript + Prisma) as dockerized services orchestrated by docker-compose.
 - Provide .env.example with consistent variables, README with correct Markdown fences, Prisma schema, basic tests,auth (JWT) and NextAuth, and PDF generation stubs.
 
 Important constraints:
-- Pin Next.js to version ^15 and React to compatible version (React ^19). Use Node.js v^20.
-- Use Prisma for DB access; use Decimal for monetary fields.
 - Do NOT include any real credentials; use placeholders only.
 - Use proper Markdown code fences (triple backticks) in README — do not escape backticks.
 
 Deliverables & expectations:
 1. Monorepo layout (files to be created):
    - /backend (Express + TypeScript)
-   - /frontend (Next.js ^15 App Router + TypeScript + Tailwind + shadcn/ui)
+   - /frontend (Next.js v^15 App Router + TypeScript + Tailwind + shadcn/ui)
    - /prisma (schema.prisma + migrations + seed.ts)
    - docker-compose.yml
    - .env.example
@@ -31,7 +29,7 @@ Deliverables & expectations:
    - Basic structured logging (pino or similar) and a health endpoint (/health).
    - Basic Jest + Supertest setup and one example integration test.
 4. Frontend:
-   - Next.js ^15 App Router, TypeScript, Tailwind CSS, shadcn/ui.
+   - Next.js v^15 App Router, TypeScript, Tailwind CSS, shadcn/ui.
    - TanStack Query for fetching, tanstack form for validation.
    - Pages/components: Auth, Dashboard, Products, Providers, Clients, Budgets (create/view), Invoices, Packing Lists, Costs, Tasks, Settings.
    - Role-based route guards and simple accessible responsive layout.

@@ -62,8 +62,8 @@ export class BudgetRepository {
         },
         costs: data.costs
           ? {
-              connect: data.costs.map((costId) => ({ id: costId })),
-            }
+            connect: data.costs.map((costId) => ({ id: costId })),
+          }
           : undefined,
       },
       include: {

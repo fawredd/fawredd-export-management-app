@@ -32,6 +32,7 @@ export default function ProductsPage() {
   const [newTariffCode, setNewTariffCode] = useState("")
   const [newTariffDescription, setNewTariffDescription] = useState("")
   const [tariffCodeError, setTariffCodeError] = useState("")
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
 
   const [formData, setFormData] = useState({
     sku: "",
@@ -42,6 +43,8 @@ export default function ProductsPage() {
     composition: "",
     tariffPositionId: "",
     unitId: "",
+    costPrice: "",
+    sellingPrice: "",
   })
 
   const queryClient = useQueryClient()
@@ -99,6 +102,26 @@ export default function ProductsPage() {
     },
   })
 
+  const uploadImagesMutation = useMutation({
+    mutationFn: ({ productId, files }: { productId: string; files: FileList }) => {
+      const formData = new FormData()
+      Array.from(files).forEach(file => formData.append('images', file))
+      return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}/images`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      }).then(res => res.json())
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] })
+      setSelectedFiles(null)
+      toast.success("Images uploaded successfully")
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to upload images")
+    },
+  })
+
   const createTariffMutation = useMutation({
     mutationFn: (data: any) => apiClient.createTariffPosition(data),
     onSuccess: (response) => {
@@ -135,11 +158,17 @@ export default function ProductsPage() {
       composition: "",
       tariffPositionId: "",
       unitId: "",
+      costPrice: "",
+      sellingPrice: "",
     })
   }
 
   const handleEdit = (product: any) => {
     setEditingProduct(product)
+    // Get latest prices from price history
+    const latestCost = product.priceHistory?.find((p: any) => p.type === 'COST')
+    const latestSelling = product.priceHistory?.find((p: any) => p.type === 'SELLING')
+
     setFormData({
       sku: product.sku || "",
       title: product.title || "",
@@ -149,6 +178,8 @@ export default function ProductsPage() {
       composition: product.composition || "",
       tariffPositionId: product.tariffPositionId || "",
       unitId: product.unitId || "",
+      costPrice: latestCost?.value?.toString() || "",
+      sellingPrice: latestSelling?.value?.toString() || "",
     })
   }
 
@@ -158,6 +189,8 @@ export default function ProductsPage() {
       ...formData,
       weightKg: formData.weightKg ? Number.parseFloat(formData.weightKg) : undefined,
       volumeM3: formData.volumeM3 ? Number.parseFloat(formData.volumeM3) : undefined,
+      costPrice: formData.costPrice ? Number.parseFloat(formData.costPrice) : undefined,
+      sellingPrice: formData.sellingPrice ? Number.parseFloat(formData.sellingPrice) : undefined,
       tariffPositionId: formData.tariffPositionId || undefined,
       unitId: formData.unitId || undefined,
     }
@@ -201,22 +234,52 @@ export default function ProductsPage() {
     })
   }
 
+  const [tariffFilter, setTariffFilter] = useState("ALL")
+
   const filteredProducts = products?.filter(
     (product: any) =>
-      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchQuery.toLowerCase()),
+      (product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (tariffFilter === "ALL" || product.tariffPositionId === tariffFilter)
   )
 
   const productColumns = [
+    {
+      header: "",
+      accessor: (row: any) => (
+        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center overflow-hidden">
+          {row.imageUrls && row.imageUrls.length > 0 ? (
+            <img src={row.imageUrls[0]} alt={row.title} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs text-muted-foreground">No img</span>
+          )}
+        </div>
+      ),
+      className: "w-12"
+    },
     { header: "SKU", accessor: "sku" as const },
     { header: "Product Name", accessor: "title" as const },
+    {
+      header: "Cost Price",
+      accessor: (row: any) => {
+        const price = row.priceHistory?.find((p: any) => p.type === 'COST');
+        return price ? `$${Number(price.value).toFixed(2)}` : "-";
+      }
+    },
+    {
+      header: "Selling Price",
+      accessor: (row: any) => {
+        const price = row.priceHistory?.find((p: any) => p.type === 'SELLING');
+        return price ? `$${Number(price.value).toFixed(2)}` : "-";
+      }
+    },
     { header: "Weight (kg)", accessor: (row: any) => row.weightKg || "-" },
     { header: "Volume (m³)", accessor: (row: any) => row.volumeM3 || "-" },
     { header: "Tariff", accessor: (row: any) => row.tariffPosition?.code || "-" },
     {
       header: "Actions",
       accessor: (row: any) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Button
             size="icon"
             variant="ghost"
@@ -263,6 +326,21 @@ export default function ProductsPage() {
                 className="pl-10"
               />
             </div>
+            <div className="w-[200px]">
+              <Select value={tariffFilter} onValueChange={setTariffFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by Tariff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Tariffs</SelectItem>
+                  {(Array.isArray(tariffPositions) ? tariffPositions : tariffPositions?.data)?.map((tariff: any) => (
+                    <SelectItem key={tariff.id} value={tariff.id}>
+                      {tariff.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -271,7 +349,11 @@ export default function ProductsPage() {
               <p className="text-muted-foreground">Loading products...</p>
             </div>
           ) : (
-            <DataTable data={filteredProducts || []} columns={productColumns} />
+            <DataTable
+              data={filteredProducts || []}
+              columns={productColumns}
+              onRowClick={handleEdit}
+            />
           )}
         </CardContent>
       </Card>
@@ -343,6 +425,30 @@ export default function ProductsPage() {
                   step="0.01"
                   value={formData.volumeM3}
                   onChange={(e) => setFormData({ ...formData, volumeM3: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="costPrice">Cost Price</Label>
+                <Input
+                  id="costPrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.costPrice}
+                  onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sellingPrice">Selling Price</Label>
+                <Input
+                  id="sellingPrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.sellingPrice}
+                  onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                  placeholder="0.00"
                 />
               </div>
             </div>
@@ -441,6 +547,79 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Price History - Only show when editing */}
+            {editingProduct && editingProduct.priceHistory && editingProduct.priceHistory.length > 0 && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Price History</Label>
+                <div className="border rounded-md overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Type</th>
+                        <th className="px-3 py-2 text-right font-medium">Price</th>
+                        <th className="px-3 py-2 text-right font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {editingProduct.priceHistory.map((history: any) => (
+                        <tr key={history.id}>
+                          <td className="px-3 py-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${history.type === 'COST' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                              }`}>
+                              {history.type}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono">
+                            ${Number(history.value).toFixed(2)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">
+                            {new Date(history.date).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Image Upload - Only show when editing */}
+            {editingProduct && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Product Images</Label>
+                <div className="space-y-2">
+                  {editingProduct.imageUrls && editingProduct.imageUrls.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {editingProduct.imageUrls.map((url: string, index: number) => (
+                        <div key={index} className="relative group">
+                          <img src={url} alt={`Product ${index + 1}`} className="w-full h-20 object-cover rounded" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => setSelectedFiles(e.target.files)}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (selectedFiles && editingProduct) {
+                          uploadImagesMutation.mutate({ productId: editingProduct.id, files: selectedFiles })
+                        }
+                      }}
+                      disabled={!selectedFiles || uploadImagesMutation.isPending}
+                    >
+                      {uploadImagesMutation.isPending ? "Uploading..." : "Upload"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <DialogFooter>
               <Button

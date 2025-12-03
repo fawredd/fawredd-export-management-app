@@ -1,6 +1,6 @@
 /**
  * Budget calculation utilities
- * Handles FOB and CIF incoterm calculations with cost proration
+ * Handles FOB/CIF/EXW/FCA/DDP incoterm calculations with cost proration
  */
 
 import { Decimal } from '@prisma/client/runtime/library';
@@ -15,7 +15,9 @@ export interface BudgetItemInput {
 }
 
 export interface CostInput {
-  type: 'FIXED' | 'VARIABLE' | 'FREIGHT' | 'INSURANCE';
+  id?: string;
+  name?: string;
+  type: 'FIXED' | 'VARIABLE';
   value: number;
 }
 
@@ -30,18 +32,29 @@ export interface BudgetCalculationResult {
     insurance: number;
     totalLine: number;
   }>;
+  subtotalProducts: number;
+  totalExpenses: number;
+  totalFOB: number;
+  totalCIF: number;
   totalAmount: number;
 }
 
 /**
- * Calculate budget totals based on incoterm (FOB or CIF)
+ * Calculate budget totals based on incoterm
  *
- * FOB (Free On Board): Seller pays costs until goods are on board the vessel
- * - Includes: product cost + fixed costs (prorated) + variable costs
- * - Excludes: freight and insurance (buyer's responsibility)
+ * FOB Calculation:
+ * - Subtotal = Sum of (quantity * unitPrice) for all products
+ * - Total Expenses = Sum of all costs (FIXED + VARIABLE)
+ * - Distribute expenses to products by their % of subtotal (by price, not weight)
+ * - FOB Total = Subtotal + Total Expenses
  *
- * CIF (Cost, Insurance, Freight): Seller pays costs, insurance, and freight
- * - Includes: product cost + fixed costs (prorated) + variable costs + freight + insurance
+ * CIF Calculation:
+ * - Same as FOB
+ * - Freight and Insurance are shown separately (NOT distributed to items)
+ * - CIF Total = FOB + Freight + Insurance
+ *
+ * Note: User can categorize costs by name (e.g., "Freight", "Insurance", "Customs")
+ * but type (FIXED/VARIABLE) only indicates if cost scales with quantity
  */
 export const calculateBudget = (
   items: BudgetItemInput[],
@@ -49,50 +62,36 @@ export const calculateBudget = (
   incoterm: Incoterm,
   dutyRate: number = 0,
 ): BudgetCalculationResult => {
-  // Calculate total weight and volume for proration
-  const totalWeight = items.reduce((sum, item) => sum + (item.weightKg || 0) * item.quantity, 0);
-  const totalVolume = items.reduce((sum, item) => sum + (item.volumeM3 || 0) * item.quantity, 0);
+  // 1. Calculate subtotal of products
+  const subtotalProducts = items.reduce((sum, item) => {
+    return sum + (item.quantity * item.unitPrice);
+  }, 0);
 
-  // Separate costs by type
-  const fixedCosts = costs.filter((c) => c.type === 'FIXED').reduce((sum, c) => sum + c.value, 0);
-  const variableCosts = costs
-    .filter((c) => c.type === 'VARIABLE')
-    .reduce((sum, c) => sum + c.value, 0);
-  const freightCosts = costs
-    .filter((c) => c.type === 'FREIGHT')
-    .reduce((sum, c) => sum + c.value, 0);
-  const insuranceCosts = costs
-    .filter((c) => c.type === 'INSURANCE')
-    .reduce((sum, c) => sum + c.value, 0);
+  // 2. Calculate total expenses (all costs)
+  const totalExpenses = costs.reduce((sum, cost) => sum + cost.value, 0);
 
+  // 3. Calculate FOB (products + distributed expenses)
+  const totalFOB = subtotalProducts + totalExpenses;
+
+  // 4. Prorate expenses to each product by price percentage
   const calculatedItems = items.map((item) => {
-    const itemWeight = (item.weightKg || 0) * item.quantity;
-    const itemVolume = (item.volumeM3 || 0) * item.quantity;
+    const itemSubtotal = item.quantity * item.unitPrice;
+    const percentage = subtotalProducts > 0 ? itemSubtotal / subtotalProducts : 0;
 
-    // Prorate fixed costs based on weight (or volume if no weight)
-    const weightRatio = totalWeight > 0 ? itemWeight / totalWeight : 0;
-    const volumeRatio = totalVolume > 0 ? itemVolume / totalVolume : 0;
-    const prorationRatio = totalWeight > 0 ? weightRatio : volumeRatio;
+    // Distribute expenses proportionally by price
+    const proratedCosts = totalExpenses * percentage;
 
-    const proratedFixedCosts = fixedCosts * prorationRatio;
-    const proratedVariableCosts = variableCosts * prorationRatio;
-    const proratedCosts = proratedFixedCosts + proratedVariableCosts;
+    // Calculate duties (for DDP)
+    const subtotalWithCosts = itemSubtotal + proratedCosts;
+    const duties = subtotalWithCosts * (dutyRate / 100);
 
-    // Calculate duties (applied to product cost + prorated costs)
-    const subtotal = item.unitPrice * item.quantity + proratedCosts;
-    const duties = subtotal * (dutyRate / 100);
+    // For CIF, freight and insurance are NOT prorated to items
+    // They are shown as separate line items in the budget
+    const freight = 0;
+    const insurance = 0;
 
-    // Prorate freight and insurance for CIF
-    let freight = 0;
-    let insurance = 0;
-
-    if (incoterm === 'CIF') {
-      freight = freightCosts * prorationRatio;
-      insurance = insuranceCosts * prorationRatio;
-    }
-
-    // Calculate total line
-    const totalLine = subtotal + duties + freight + insurance;
+    // Calculate total line (product + prorated costs + duties)
+    const totalLine = itemSubtotal + proratedCosts + duties;
 
     return {
       productId: item.productId,
@@ -106,16 +105,47 @@ export const calculateBudget = (
     };
   });
 
-  const totalAmount = calculatedItems.reduce((sum, item) => sum + item.totalLine, 0);
+  // 5. For CIF, freight and insurance are shown separately
+  // User will identify them by name in the Cost model
+  // CIF = FOB (already includes all expenses)
+  const totalCIF = totalFOB;
+
+  // 6. Calculate final total based on Incoterm
+  let totalAmount: number;
+  switch (incoterm) {
+    case 'EXW':
+      totalAmount = subtotalProducts; // Just products, no expenses
+      break;
+    case 'FCA':
+      totalAmount = subtotalProducts; // Simplified - just products
+      break;
+    case 'FOB':
+      totalAmount = totalFOB;
+      break;
+    case 'CIF':
+      totalAmount = totalCIF;
+      break;
+    case 'DDP':
+      // DDP includes duties
+      const totalDuties = calculatedItems.reduce((sum, item) => sum + item.duties, 0);
+      totalAmount = totalCIF + totalDuties;
+      break;
+    default:
+      totalAmount = totalFOB;
+  }
 
   return {
     items: calculatedItems,
+    subtotalProducts: Number(subtotalProducts.toFixed(6)),
+    totalExpenses: Number(totalExpenses.toFixed(6)),
+    totalFOB: Number(totalFOB.toFixed(6)),
+    totalCIF: Number(totalCIF.toFixed(6)),
     totalAmount: Number(totalAmount.toFixed(6)),
   };
 };
 
 /**
- * Convert a budget calculation result to Prisma Decimal format
+ * Convert a number to Prisma Decimal format
  */
 export const toPrismaDecimal = (value: number): Decimal => {
   return new Decimal(value);

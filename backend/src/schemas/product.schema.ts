@@ -28,6 +28,14 @@ export const createProductSchema = z.object({
   tariffPositionId: z.string().cuid('Invalid tariff position ID format').optional(),
   unitId: z.string().cuid('Invalid unit ID format').optional(),
   providerId: z.string().cuid('Invalid provider ID format').optional(),
+  costPrice: z.number()
+    .positive('Cost price must be positive')
+    .max(999999999.99, 'Cost price is too large')
+    .optional(),
+  sellingPrice: z.number()
+    .positive('Selling price must be positive')
+    .max(999999999.99, 'Selling price is too large')
+    .optional(),
 });
 
 /**

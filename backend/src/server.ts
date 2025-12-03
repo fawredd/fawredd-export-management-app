@@ -29,6 +29,8 @@ import priceHistoryRoutes from './routes/price-history.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import packingListRoutes from './routes/packing-list.routes';
 import publicRoutes from './routes/public.routes';
+import userRoutes from './routes/user.routes';
+import bulkImportRoutes from './routes/bulk-import.routes';
 
 // Import middleware
 import { errorHandler } from './middlewares/error.middleware';
@@ -135,6 +137,7 @@ app.use('/api/public', publicRoutes);
 
 // Mount API routes (authentication required)
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/providers', providerRoutes);
@@ -148,6 +151,7 @@ app.use('/api/taxes', taxRoutes);
 app.use('/api/price-history', priceHistoryRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/packing-lists', packingListRoutes);
+app.use('/api/bulk-import', bulkImportRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

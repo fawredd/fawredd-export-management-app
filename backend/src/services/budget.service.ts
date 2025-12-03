@@ -51,6 +51,8 @@ export class BudgetService {
 
     // Prepare costs for calculation
     const costsForCalculation = costs.map((cost) => ({
+      id: cost.id,
+      name: cost.name,
       type: cost.type,
       value: Number(cost.value),
     }));
@@ -75,7 +77,7 @@ export class BudgetService {
       totalLine: toPrismaDecimal(item.totalLine),
     }));
 
-    // Create budget
+    // Create budget with calculation breakdowns
     const budget = await budgetRepository.create({
       clientId: data.clientId,
       incoterm: data.incoterm,

@@ -55,8 +55,14 @@ services:
     # 💥 EJECUCIÓN CRÍTICA: Inicializa la DB y luego arranca la app
     # 1. npx prisma migrate reset --force: Resetea la DB y aplica las migraciones (uso en desarrollo)
     # 2. && npm run dev: Arranca el servidor Express/Node
-    command: sh -c "npx prisma db push && npx prisma db seed && npm run dev"
-
+    #command: sh -c "npx prisma migrate reset --force && npm run dev"
+    command: >
+      sh -c "
+        npx prisma db push --accept-data-loss &&
+        npx prisma db execute --file=./prisma/seed.sql --schema=./prisma/schema.prisma || true &&
+        npm run dev
+      "
+  
   frontend:
     build: ./frontend
     container_name: export_frontend

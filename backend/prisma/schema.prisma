@@ -8,18 +8,43 @@ generator client {
 }
 
 // ============================================
+// ORGANIZATION & SAAS
+// ============================================
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  plan        Plan     @default(FREE)
+  users       User[]
+  providers   Provider[]
+  clients     Client[]
+  products    Product[]
+  budgets     Budget[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Plan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+// ============================================
 // USER & AUTHENTICATION
 // ============================================
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      Role     @default(CLIENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  auditLogs AuditLog[]
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String
+  name           String?
+  role           Role          @default(CLIENT)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  auditLogs      AuditLog[]
 }
 
 enum Role {
@@ -34,28 +59,38 @@ enum Role {
 // ============================================
 
 model Provider {
-  id        String    @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  taxId     String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id             String        @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  taxId          String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  products       Product[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Client {
-  id            String    @id @default(cuid())
-  name          String
-  email         String?
-  phone         String?
-  address       String?
-  taxId         String?
-  convertedFrom String?   // Track if converted from prospect (budget shareToken)
-  budgets       Budget[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String        @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  taxId          String?
+  status         ClientStatus  @default(PROSPECT)
+  convertedFrom  String?       // Track if converted from prospect (budget shareToken)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  budgets        Budget[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum ClientStatus {
+  PROSPECT
+  CLIENT
 }
 
 // ============================================
@@ -78,6 +113,8 @@ model Product {
   unitId           String?
   provider         Provider?       @relation(fields: [providerId], references: [id])
   providerId       String?
+  organization     Organization?   @relation(fields: [organizationId], references: [id])
+  organizationId   String?
   priceHistory     PriceHistory[]
   taxes            Tax[]
   exportTasks      ExportTask[]
@@ -121,11 +158,11 @@ enum PriceType {
 }
 
 model Tax {
-  id         String  @id @default(cuid())
-  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId  String
   name       String
-  percentage Decimal @db.Decimal(8, 4)
+  percentage Decimal  @db.Decimal(8, 4)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -135,16 +172,16 @@ model Tax {
 // ============================================
 
 model ExportTask {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   description String
   status      TaskStatus @default(PENDING)
-  country     Country   @relation(fields: [countryId], references: [id])
+  country     Country    @relation(fields: [countryId], references: [id])
   countryId   String
   products    Product[]
   dueDate     DateTime?
   completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum TaskStatus {
@@ -180,8 +217,6 @@ model Cost {
 enum CostType {
   FIXED
   VARIABLE
-  FREIGHT
-  INSURANCE
 }
 
 // ============================================
@@ -189,28 +224,33 @@ enum CostType {
 // ============================================
 
 model Budget {
-  id           String        @id @default(cuid())
-  client       Client        @relation(fields: [clientId], references: [id])
-  clientId     String
-  incoterm     Incoterm
-  status       BudgetStatus  @default(DRAFT)
-  totalAmount  Decimal?      @db.Decimal(20, 6)
-  shareToken   String?       @unique // For public sharing
-  expiresAt    DateTime?     // Optional expiration for shared link
-  viewCount    Int           @default(0) // Track views
-  acceptedAt   DateTime?     // When budget was accepted
-  acceptedBy   String?       // Prospect email/name who accepted
-  budgetItems  BudgetItem[]
-  costs        Cost[]
-  invoices     Invoice[]
-  packingLists PackingList[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  client         Client        @relation(fields: [clientId], references: [id])
+  clientId       String
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  incoterm       Incoterm
+  status         BudgetStatus  @default(DRAFT)
+  totalAmount    Decimal?      @db.Decimal(20, 6)
+  shareToken     String?       @unique // For public sharing
+  expiresAt      DateTime?     // Optional expiration for shared link
+  viewCount      Int           @default(0) // Track views
+  acceptedAt     DateTime?     // When budget was accepted
+  acceptedBy     String?       // Prospect email/name who accepted
+  budgetItems    BudgetItem[]
+  costs          Cost[]
+  invoices       Invoice[]
+  packingLists   PackingList[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 enum Incoterm {
   FOB
   CIF
+  EXW
+  FCA
+  DDP
 }
 
 enum BudgetStatus {
@@ -225,20 +265,20 @@ enum BudgetStatus {
 }
 
 model BudgetItem {
-  id             String  @id @default(cuid())
-  budget         Budget  @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  budgetId       String
-  product        Product @relation(fields: [productId], references: [id])
-  productId      String
-  quantity       Int
-  unitPrice      Decimal @db.Decimal(20, 6)
-  proratedCosts  Decimal @db.Decimal(20, 6) @default(0)
-  duties         Decimal @db.Decimal(20, 6) @default(0)
-  freight        Decimal @db.Decimal(20, 6) @default(0)
-  insurance      Decimal @db.Decimal(20, 6) @default(0)
-  totalLine      Decimal @db.Decimal(20, 6)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  budget        Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  budgetId      String
+  product       Product  @relation(fields: [productId], references: [id])
+  productId     String
+  quantity      Int
+  unitPrice     Decimal  @db.Decimal(20, 6)
+  proratedCosts Decimal  @db.Decimal(20, 6) @default(0)
+  duties        Decimal  @db.Decimal(20, 6) @default(0)
+  freight       Decimal  @db.Decimal(20, 6) @default(0)
+  insurance     Decimal  @db.Decimal(20, 6) @default(0)
+  totalLine     Decimal  @db.Decimal(20, 6)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // ============================================

@@ -54,10 +54,10 @@ export default function AdminDashboardPage() {
   const totalClients = clients?.length || 0
   const totalProviders = providers?.length || 0
   const totalBudgets = budgets?.length || 0
-  
+
   const pendingBudgets = budgets?.filter((b: any) => b.status === "PENDING").length || 0
   const approvedBudgets = budgets?.filter((b: any) => b.status === "APPROVED").length || 0
-  
+
   const totalRevenue = budgets
     ?.filter((b: any) => b.status === "APPROVED" || b.status === "INVOICED")
     .reduce((sum: number, b: any) => sum + (Number(b.totalAmount) || 0), 0) || 0
@@ -208,12 +208,15 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="space-y-3">
               {budgets?.slice(0, 5).map((budget: any) => (
-                <div key={budget.id} className="flex items-center gap-3 text-sm">
-                  <div className={`w-2 h-2 rounded-full ${
-                    budget.status === "APPROVED" ? "bg-green-500" :
-                    budget.status === "PENDING" ? "bg-yellow-500" :
-                    "bg-gray-500"
-                  }`} />
+                <div
+                  key={budget.id}
+                  className="flex items-center gap-3 text-sm p-2 rounded hover:bg-accent cursor-pointer transition-colors"
+                  onClick={() => router.push(`/budgets/${budget.id}`)}
+                >
+                  <div className={`w-2 h-2 rounded-full ${budget.status === "APPROVED" ? "bg-green-500" :
+                      budget.status === "PENDING" ? "bg-yellow-500" :
+                        "bg-gray-500"
+                    }`} />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
                       Budget for {budget.client?.name || "Unknown"}

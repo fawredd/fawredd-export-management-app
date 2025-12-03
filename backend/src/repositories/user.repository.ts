@@ -33,20 +33,22 @@ export class UserRepository {
     password: string;
     name?: string;
     role?: Role;
+    organizationId?: string;
   }): Promise<User> {
     return prisma.user.create({ data });
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<Omit<User, 'password'>[]> {
     return prisma.user.findMany({
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
+        organizationId: true,
         createdAt: true,
         updatedAt: true,
-        password: false,
+        // password: false // password is not selected by default if we select specific fields
       },
     });
   }

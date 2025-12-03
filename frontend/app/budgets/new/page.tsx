@@ -30,6 +30,7 @@ const budgetSchema = z.object({
       }),
     )
     .min(1, "At least one item is required"),
+  costIds: z.array(z.string()).optional(),
 })
 
 type BudgetFormData = z.infer<typeof budgetSchema>
@@ -37,9 +38,13 @@ type BudgetFormData = z.infer<typeof budgetSchema>
 export default function NewBudgetPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  
+
   const [isCreatingClient, setIsCreatingClient] = useState(false)
   const [isCreatingProduct, setIsCreatingProduct] = useState(false)
+  const [isCreatingExpense, setIsCreatingExpense] = useState(false)
+  const [expenses, setExpenses] = useState<Array<{ id?: string, description: string, value: number, isNew?: boolean }>>([])
+  const [expenseSearch, setExpenseSearch] = useState("")
+  const [newExpenseData, setNewExpenseData] = useState({ description: "", value: "" })
   const [newClientData, setNewClientData] = useState({
     name: "",
     email: "",
@@ -63,6 +68,11 @@ export default function NewBudgetPage() {
     queryFn: () => apiClient.getProducts(),
   })
 
+  const { data: costs } = useQuery({
+    queryKey: ["costs"],
+    queryFn: () => apiClient.getCosts(),
+  })
+
   const {
     register,
     handleSubmit,
@@ -84,9 +94,9 @@ export default function NewBudgetPage() {
 
   const mutation = useMutation({
     mutationFn: (data: any) => apiClient.createBudget(data),
-    onSuccess: () => {
+    onSuccess: (newBudget) => {
       toast.success("Budget created successfully")
-      router.push("/budgets")
+      router.push(`/budgets/${newBudget.id}`)
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create budget")
@@ -129,9 +139,34 @@ export default function NewBudgetPage() {
         quantity: Number.parseInt(item.quantity),
         unitPrice: Number.parseFloat(item.unitPrice),
       })),
+      costIds: expenses.filter(e => e.id).map(e => e.id!),
+      newExpenses: expenses.filter(e => e.isNew).map(e => ({ description: e.description, value: e.value, type: "FIXED" }))
     }
     mutation.mutate(payload)
   }
+
+  // Calculate totals for preview
+  const calculateTotals = () => {
+    const items = watch("items") || []
+    const subtotal = items.reduce((sum, item) => {
+      const qty = Number.parseFloat(item.quantity) || 0
+      const price = Number.parseFloat(item.unitPrice) || 0
+      return sum + (qty * price)
+    }, 0)
+
+    const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.value), 0)
+
+    const totalFOB = subtotal + totalExpenses
+
+    return {
+      subtotal,
+      totalExpenses,
+      totalFOB,
+      totalCIF: totalFOB, // For CIF, freight/insurance already in expenses
+    }
+  }
+
+  const totals = calculateTotals()
 
   const handleCreateClient = (e: React.FormEvent) => {
     e.preventDefault()
@@ -190,8 +225,11 @@ export default function NewBudgetPage() {
                     <SelectValue placeholder="Select incoterm" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="EXW">EXW - Ex Works</SelectItem>
+                    <SelectItem value="FCA">FCA - Free Carrier</SelectItem>
                     <SelectItem value="FOB">FOB - Free On Board</SelectItem>
                     <SelectItem value="CIF">CIF - Cost, Insurance & Freight</SelectItem>
+                    <SelectItem value="DDP">DDP - Delivered Duty Paid</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.incoterm && <p className="text-sm text-destructive">{errors.incoterm.message}</p>}
@@ -235,7 +273,17 @@ export default function NewBudgetPage() {
                   <Label>Product *</Label>
                   <Select
                     value={watch(`items.${index}.productId`)}
-                    onValueChange={(value) => setValue(`items.${index}.productId`, value)}
+                    onValueChange={(value) => {
+                      setValue(`items.${index}.productId`, value)
+                      // Auto-fill price
+                      const product = products?.find((p: any) => p.id === value)
+                      if (product && product.priceHistory && product.priceHistory.length > 0) {
+                        const latestSelling = product.priceHistory.find((p: any) => p.type === 'SELLING')
+                        if (latestSelling) {
+                          setValue(`items.${index}.unitPrice`, latestSelling.value.toString())
+                        }
+                      }
+                    }}
                   >
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Select product" />
@@ -267,7 +315,7 @@ export default function NewBudgetPage() {
                 </div>
 
                 <div className="w-40 space-y-2">
-                  <Label>Unit Price *</Label>
+                  <Label>Selling Unit Price *</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -287,6 +335,125 @@ export default function NewBudgetPage() {
                 )}
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Expenses & Services</CardTitle>
+                <CardDescription>Add expenses one at a time (freight, insurance, customs, etc.)</CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCreatingExpense(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Expense
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {expenses.length > 0 ? (
+              <div className="space-y-2">
+                {expenses.map((expense, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="font-medium">{expense.description}</div>
+                      {expense.isNew && <div className="text-xs text-muted-foreground">New expense</div>}
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={expense.value}
+                      onChange={(e) => {
+                        const newExpenses = [...expenses]
+                        newExpenses[index].value = Number(e.target.value)
+                        setExpenses(newExpenses)
+                      }}
+                      className="w-32"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setExpenses(expenses.filter((_, i) => i !== index))}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No expenses added yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Budget Preview</CardTitle>
+            <CardDescription>Review your budget with final {watch("incoterm") || "FOB"} prices</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Products with final prices */}
+            {watch("items")?.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Products</Label>
+                <div className="border rounded-md">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Product</th>
+                        <th className="px-3 py-2 text-right">Qty</th>
+                        <th className="px-3 py-2 text-right">Unit Price</th>
+                        <th className="px-3 py-2 text-right">{watch("incoterm") || "FOB"} Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {watch("items").map((item: any, index: number) => {
+                        const product = products?.find((p: any) => p.id === item.productId)
+                        const qty = Number(item.quantity) || 0
+                        const unitPrice = Number(item.unitPrice) || 0
+                        const proratedExpense = totals.totalExpenses / (watch("items")?.length || 1)
+                        const finalPrice = watch("incoterm") === "EXW" || watch("incoterm") === "FCA"
+                          ? unitPrice
+                          : unitPrice + (proratedExpense / qty)
+                        return (
+                          <tr key={index}>
+                            <td className="px-3 py-2">{product?.title || "Unknown"}</td>
+                            <td className="px-3 py-2 text-right">{qty}</td>
+                            <td className="px-3 py-2 text-right">${unitPrice.toFixed(2)}</td>
+                            <td className="px-3 py-2 text-right font-medium">${(qty * finalPrice).toFixed(2)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="space-y-3 pt-4 border-t">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Products Subtotal:</span>
+                <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Expenses & Services:</span>
+                <span className="font-medium">${totals.totalExpenses.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-2">
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>{watch("incoterm") || "FOB"} Total:</span>
+                  <span>${(watch("incoterm") === "EXW" || watch("incoterm") === "FCA" ? totals.subtotal : totals.totalFOB).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -418,6 +585,88 @@ export default function NewBudgetPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Expense Dialog */}
+      <Dialog open={isCreatingExpense} onOpenChange={setIsCreatingExpense}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Expense/Service</DialogTitle>
+            <DialogDescription>Add a new expense or select from existing</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {costs && costs.length > 0 && (
+              <div className="space-y-2">
+                <Label>Select from existing</Label>
+                <Input
+                  placeholder="Search expenses..."
+                  value={expenseSearch}
+                  onChange={(e) => setExpenseSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {costs
+                    .filter((c: any) => !expenses.find(e => e.id === c.id))
+                    .filter((c: any) =>
+                      !expenseSearch ||
+                      (c.description?.toLowerCase().includes(expenseSearch.toLowerCase()) ||
+                        c.type?.toLowerCase().includes(expenseSearch.toLowerCase()))
+                    )
+                    .map((cost: any) => (
+                      <button
+                        key={cost.id}
+                        type="button"
+                        onClick={() => {
+                          setExpenses([...expenses, { id: cost.id, description: cost.description || cost.type, value: Number(cost.value) }])
+                          setIsCreatingExpense(false)
+                          setExpenseSearch("")
+                        }}
+                        className="w-full text-left p-2 rounded hover:bg-accent flex justify-between"
+                      >
+                        <span>{cost.description || cost.type}</span>
+                        <span className="font-medium">${Number(cost.value).toFixed(2)}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+            <div className="border-t pt-4">
+              <Label>Or create new</Label>
+              <div className="space-y-2 mt-2">
+                <Input
+                  placeholder="Description (e.g., Freight, Insurance)"
+                  value={newExpenseData.description}
+                  onChange={(e) => setNewExpenseData({ ...newExpenseData, description: e.target.value })}
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Value"
+                  value={newExpenseData.value}
+                  onChange={(e) => setNewExpenseData({ ...newExpenseData, value: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCreatingExpense(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (newExpenseData.description && newExpenseData.value) {
+                  setExpenses([...expenses, { description: newExpenseData.description, value: Number(newExpenseData.value), isNew: true }])
+                  setNewExpenseData({ description: "", value: "" })
+                  setIsCreatingExpense(false)
+                }
+              }}
+              disabled={!newExpenseData.description || !newExpenseData.value}
+            >
+              Add Expense
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

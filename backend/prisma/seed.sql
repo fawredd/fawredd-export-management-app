@@ -1,18 +1,21 @@
 -- Seed data for initial database setup
 -- This file is automatically executed when the postgres container starts
 
+INSERT INTO "Organization" (id, name, plan, "createdAt", "updatedAt")
+VALUES ('org001', 'Default Org', 'FREE', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
 -- Note: User passwords should be hashed with bcrypt in the actual application
 -- The password below is a placeholder and should be replaced with a properly hashed password
 
 -- Users password is Admin123! for all of them.
-
-INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
+INSERT INTO "User" (id, email, password, name, role, "organizationId", "createdAt", "updatedAt")
 VALUES 
-  ('admin001', 'admin@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'System Administrator', 'ADMIN', NOW(), NOW())
+  ('admin001', 'admin@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'System Administrator', 'ADMIN', NULL, NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
-INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
+INSERT INTO "User" (id, email, password, name, role, "organizationId", "createdAt", "updatedAt")
 VALUES 
-  ('manufacturer001', 'man01@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'MANUFACTURER', 'MANUFACTURER', NOW(), NOW())
+  ('manufacturer001', 'man01@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'MANUFACTURER', 'MANUFACTURER', 'org001', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample countries
@@ -45,27 +48,27 @@ VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- Insert sample providers
-INSERT INTO "Provider" (id, name, email, phone, address, "taxId", "createdAt", "updatedAt")
+INSERT INTO "Provider" ("organizationId", id, name, email, phone, address, "taxId", "createdAt", "updatedAt")
 VALUES 
-  ('provider001', 'Acme Manufacturing SA', 'contact@acme.com.ar', '+54 11 4567-8900', 'Av. Corrientes 1234, Buenos Aires', '30-12345678-9', NOW(), NOW()),
-  ('provider002', 'Global Exports Ltd', 'info@globalexports.com', '+54 11 5678-9012', 'Av. Santa Fe 5678, Buenos Aires', '30-23456789-0', NOW(), NOW()),
-  ('provider003', 'Premium Goods SRL', 'sales@premiumgoods.com.ar', '+54 11 6789-0123', 'Av. Libertador 9012, Buenos Aires', '30-34567890-1', NOW(), NOW())
+  ('org001', 'provider001', 'Acme Manufacturing SA', 'contact@acme.com.ar', '+54 11 4567-8900', 'Av. Corrientes 1234, Buenos Aires', '30-12345678-9', NOW(), NOW()),
+  ('org001', 'provider002', 'Global Exports Ltd', 'info@globalexports.com', '+54 11 5678-9012', 'Av. Santa Fe 5678, Buenos Aires', '30-23456789-0', NOW(), NOW()),
+  ('org001', 'provider003', 'Premium Goods SRL', 'sales@premiumgoods.com.ar', '+54 11 6789-0123', 'Av. Libertador 9012, Buenos Aires', '30-34567890-1', NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Insert sample clients
-INSERT INTO "Client" (id, name, email, phone, address, "taxId", "createdAt", "updatedAt")
+INSERT INTO "Client" ("organizationId", id, name, email, phone, address, "taxId", status, "createdAt", "updatedAt")
 VALUES 
-  ('client001', 'International Traders Inc', 'orders@inttraders.com', '+1 305 123-4567', '123 Main St, Miami, FL', 'US-123456789', NOW(), NOW()),
-  ('client002', 'European Imports GmbH', 'purchasing@euroimports.de', '+49 30 1234567', 'Hauptstraße 45, Berlin', 'DE-987654321', NOW(), NOW()),
-  ('client003', 'Asian Distribution Co', 'contact@asiandist.cn', '+86 10 8765-4321', '88 Nanjing Rd, Shanghai', 'CN-456789123', NOW(), NOW())
+  ('org001', 'client001', 'International Traders Inc', 'orders@inttraders.com', '+1 305 123-4567', '123 Main St, Miami, FL', 'US-123456789', 'CLIENT', NOW(), NOW()),
+  ('org001', 'client002', 'European Imports GmbH', 'purchasing@euroimports.de', '+49 30 1234567', 'Hauptstraße 45, Berlin', 'DE-987654321', 'CLIENT', NOW(), NOW()),
+  ('org001', 'client003', 'Asian Distribution Co', 'contact@asiandist.cn', '+86 10 8765-4321', '88 Nanjing Rd, Shanghai', 'CN-456789123', 'CLIENT', NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Insert sample products
-INSERT INTO "Product" (id, sku, title, description, "weightKg", "volumeM3", composition, "tariffPositionId", "unitId", "providerId", "createdAt", "updatedAt")
+INSERT INTO "Product" ("organizationId", id, sku, title, description, "weightKg", "volumeM3", composition, "tariffPositionId", "unitId", "providerId","imageUrls", "createdAt", "updatedAt")
 VALUES 
-  ('product001', 'PROD-001', 'Premium Arabica Coffee Beans', 'High-quality roasted coffee beans from Argentina', 25.0, 0.05, '100% Arabica Coffee', 'tariff001', 'unit001', 'provider001', NOW(), NOW()),
-  ('product002', 'PROD-002', 'Malbec Wine Reserve', 'Premium Malbec wine from Mendoza region', 15.0, 0.012, 'Malbec Grapes, Sulfites', 'tariff002', 'unit002', 'provider002', NOW(), NOW()),
-  ('product003', 'PROD-003', 'Leather Boots', 'Handcrafted leather boots', 1.5, 0.008, 'Genuine Leather, Rubber Sole', 'tariff004', 'unit003', 'provider003', NOW(), NOW())
+  ('org001', 'product001', 'PROD-001', 'Premium Arabica Coffee Beans', 'High-quality roasted coffee beans from Argentina', 25.0, 0.05, '100% Arabica Coffee', 'tariff001', 'unit001', 'provider001', '{}', NOW(), NOW()),
+  ('org001', 'product002', 'PROD-002', 'Malbec Wine Reserve', 'Premium Malbec wine from Mendoza region', 15.0, 0.012, 'Malbec Grapes, Sulfites', 'tariff002', 'unit002', 'provider002', '{}', NOW(), NOW()),
+  ('org001', 'product003', 'PROD-003', 'Leather Boots', 'Handcrafted leather boots', 1.5, 0.008, 'Genuine Leather, Rubber Sole', 'tariff004', 'unit003', 'provider003', '{}', NOW(), NOW())
 ON CONFLICT (sku) DO NOTHING;
 
 -- Insert sample price history
@@ -84,16 +87,16 @@ INSERT INTO "Cost" (id, type, description, value, "createdAt", "updatedAt")
 VALUES 
   ('cost001', 'FIXED', 'Customs Broker Fee', 500.00, NOW(), NOW()),
   ('cost002', 'FIXED', 'Terminal Handling', 300.00, NOW(), NOW()),
-  ('cost003', 'FREIGHT', 'Ocean Freight to Miami', 2500.00, NOW(), NOW()),
-  ('cost004', 'INSURANCE', 'Cargo Insurance', 150.00, NOW(), NOW())
+  ('cost003', 'FIXED', 'Ocean Freight to Miami', 2500.00, NOW(), NOW()),
+  ('cost004', 'FIXED', 'Cargo Insurance', 150.00, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Insert additional users with different roles
-INSERT INTO "User" (id, email, password, name, role, "createdAt", "updatedAt")
+INSERT INTO "User" (id, email, password, name, role, "organizationId", "createdAt", "updatedAt")
 VALUES 
-  ('trader001', 'trader@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'John Trader', 'TRADER', NOW(), NOW()),
-  ('manufacturer002', 'manufacturer@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Maria Manufacturer', 'MANUFACTURER', NOW(), NOW()),
-  ('client001user', 'client@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Client User', 'CLIENT', NOW(), NOW())
+  ('trader001', 'trader@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'John Trader', 'TRADER', 'org001', NOW(), NOW()),
+  ('manufacturer002', 'manufacturer@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Maria Manufacturer', 'MANUFACTURER', 'org001', NOW(), NOW()),
+  ('client001user', 'client@example.com', '$2a$10$L.M3ueHTu.CQdzmUsIKKr.wzF5RjoyO04dF0LYKGM50q8nFGUgaHy', 'Client User', 'CLIENT', 'org001', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample taxes for products
@@ -116,7 +119,7 @@ ON CONFLICT DO NOTHING;
 
 -- Link export tasks with products (many-to-many)
 INSERT INTO "_ExportTaskToProduct" ("A", "B")
-VALUES 
+VALUES
   ('task001', 'product001'),
   ('task002', 'product002'),
   ('task003', 'product003'),
@@ -124,12 +127,13 @@ VALUES
   ('task004', 'product002')
 ON CONFLICT DO NOTHING;
 
+
 -- Insert sample budgets
-INSERT INTO "Budget" (id, "clientId", incoterm, "totalAmount", status, "createdAt", "updatedAt")
+INSERT INTO "Budget" ("organizationId", id, "clientId", incoterm, "totalAmount", status, "createdAt", "updatedAt")
 VALUES 
-  ('budget001', 'client001', 'FOB', 15000.00, 'APPROVED', NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days'),
-  ('budget002', 'client002', 'CIF', 25000.00, 'PENDING_APPROVAL', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
-  ('budget003', 'client003', 'FOB', 8500.00, 'APPROVED', NOW() - INTERVAL '10 days', NOW() - INTERVAL '7 days')
+  ('org001', 'budget001', 'client001', 'FOB', 15000.00, 'APPROVED', NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days'),
+  ('org001', 'budget002', 'client002', 'CIF', 25000.00, 'PENDING_APPROVAL', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+  ('org001', 'budget003', 'client003', 'FOB', 8500.00, 'APPROVED', NOW() - INTERVAL '10 days', NOW() - INTERVAL '7 days')
 ON CONFLICT DO NOTHING;
 
 -- Insert budget items

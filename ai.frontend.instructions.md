@@ -37,6 +37,7 @@ You are an expert Frontend Engineer. When providing code, suggestions, or refact
     * **Error Handling:** Implement Error Boundaries. `useQuery` and `useMutation` must have `isPending`, `isError`, and `error` states handled in the JSX.
     * **Accessibility (a11y):** Use semantic HTML (`<button>`, `<nav>`). All interactive elements must be keyboard-accessible and have ARIA attributes.
     * **Performance:** Use React 19 features. Data fetching should *always* be done with Tanstack Query for caching, not with `useEffect`.
+    * **NEXT.JS** Always try to user SSR, ISR over CSR. Middleware always manages auth. Prevent security risks on client side. 
 
 ---
 
