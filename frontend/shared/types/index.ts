@@ -10,15 +10,26 @@ export enum Role {
 }
 
 export enum Incoterm {
+  EXW = 'EXW',
+  FCA = 'FCA',
   FOB = 'FOB',
+  CFR = 'CFR',
   CIF = 'CIF',
+  CPT = 'CPT',
+  CIP = 'CIP',
+  DAP = 'DAP',
+  DPU = 'DPU',
+  DDP = 'DDP',
 }
 
 export enum BudgetStatus {
   DRAFT = 'DRAFT',
+  SENT = 'SENT',
+  VIEWED = 'VIEWED',
   PENDING_APPROVAL = 'PENDING_APPROVAL',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
   INVOICED = 'INVOICED',
 }
 
@@ -45,6 +56,14 @@ export interface User {
   updatedAt: string;
 }
 
+export interface PriceHistory {
+  id: string;
+  productId: string;
+  value: number;
+  type: 'COST' | 'SELLING';
+  createdAt: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -58,6 +77,7 @@ export interface Product {
   providerId?: string;
   createdAt: string;
   updatedAt: string;
+  priceHistory?: PriceHistory[];
 }
 
 export interface Provider {
@@ -82,20 +102,11 @@ export interface Client {
   updatedAt: string;
 }
 
-export interface Budget {
-  id: string;
-  clientId: string;
-  incoterm: Incoterm;
-  status: BudgetStatus;
-  totalAmount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface BudgetItem {
   id: string;
   budgetId: string;
   productId: string;
+  product?: Product;
   quantity: number;
   unitPrice: number;
   proratedCosts: number;
@@ -108,8 +119,23 @@ export interface BudgetItem {
 export interface Cost {
   id: string;
   type: CostType;
+  name?: string;
   description?: string;
   value: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Budget {
+  id: string;
+  clientId: string;
+  client?: Client;
+  incoterm: Incoterm;
+  status: BudgetStatus;
+  totalAmount?: number;
+  createdAt: string;
+  updatedAt: string;
+  budgetItems?: BudgetItem[];
+  costs?: Cost[];
+  items?: BudgetItem[];
 }

@@ -198,6 +198,7 @@ export default function BudgetDetailsPage() {
                     <CardDescription>Cost breakdown by Incoterm: {budget.incoterm}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                    {/* Products Subtotal */}
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Products Subtotal:</span>
                         <span className="font-medium">
@@ -205,13 +206,73 @@ export default function BudgetDetailsPage() {
                                 sum + (item.quantity * Number(item.unitPrice)), 0).toFixed(2) || "0.00"}
                         </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Expenses & Services:</span>
-                        <span className="font-medium">
-                            ${budget.costs?.reduce((sum: number, cost: any) =>
-                                sum + Number(cost.value), 0).toFixed(2) || "0.00"}
-                        </span>
-                    </div>
+
+                    {/* Logic for different Incoterms */}
+                    {(() => {
+                        const subtotal = budget.budgetItems?.reduce((sum: number, item: any) => sum + (item.quantity * Number(item.unitPrice)), 0) || 0
+                        const costs = budget.costs || []
+
+                        const freight = costs.filter((c: any) => c.type === "FREIGHT").reduce((sum: number, c: any) => sum + Number(c.value), 0)
+                        const insurance = costs.filter((c: any) => c.type === "INSURANCE").reduce((sum: number, c: any) => sum + Number(c.value), 0)
+                        const localCosts = costs.filter((c: any) => !["FREIGHT", "INSURANCE"].includes(c.type)).reduce((sum: number, c: any) => sum + Number(c.value), 0)
+
+                        const totalFOB = subtotal + localCosts
+
+                        if (budget.incoterm === "EXW" || budget.incoterm === "FCA") {
+                            return (
+                                <>
+                                    {localCosts > 0 && (
+                                        <div className="flex justify-between text-sm text-muted-foreground">
+                                            <span>Additional Expenses:</span>
+                                            <span>${localCosts.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        }
+
+                        if (budget.incoterm === "FOB") {
+                            return (
+                                <>
+                                    {localCosts > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Local Costs (Included):</span>
+                                            <span className="font-medium">${localCosts.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <Separator />
+                                    <div className="flex justify-between font-semibold">
+                                        <span>FOB Total:</span>
+                                        <span>${totalFOB.toFixed(2)}</span>
+                                    </div>
+                                </>
+                            )
+                        }
+
+                        if (["CIF", "CFR", "CPT", "CIP", "DDP", "DAP"].includes(budget.incoterm)) {
+                            return (
+                                <>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">FOB Subtotal:</span>
+                                        <span className="font-medium">${totalFOB.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Freight:</span>
+                                        <span className="font-medium">${freight.toFixed(2)}</span>
+                                    </div>
+
+                                    {["CIF", "CIP", "DDP"].includes(budget.incoterm) && (
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Insurance:</span>
+                                            <span className="font-medium">${insurance.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        }
+                    })()}
+
                     <Separator />
                     <div className="flex justify-between font-bold text-xl">
                         <span>Total Amount ({budget.incoterm}):</span>
