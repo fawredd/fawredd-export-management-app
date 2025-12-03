@@ -8,6 +8,7 @@ import { queryClient } from "@/lib/query-client"
 import { useQuery } from "@tanstack/react-query"
 
 import { apiClient } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth-context"
 import { StatCard } from "@/components/stat-card"
 import { DataTable } from "@/components/data-table"
 import { Users, Eye, Edit, Trash2 } from "lucide-react"
@@ -20,6 +21,8 @@ export default function DashboardPage() {
 
   // Auth check handled by middleware
 
+
+  const { user } = useAuth()
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -36,9 +39,12 @@ export default function DashboardPage() {
     queryFn: () => apiClient.getBudgets(),
   })
 
+  const canViewUsers = user?.role === "ADMIN" || user?.role === "MANUFACTURER" || user?.role === "TRADER"
+
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: () => apiClient.getUsers(),
+    enabled: canViewUsers,
   })
 
   const totalUsers = users?.length || 0

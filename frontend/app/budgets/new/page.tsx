@@ -85,6 +85,7 @@ export default function NewBudgetPage() {
     resolver: zodResolver(budgetSchema),
     defaultValues: {
       items: [{ productId: "", quantity: "", unitPrice: "" }],
+      incoterm: "FOB" as Incoterm,
     },
   })
 
@@ -424,18 +425,33 @@ export default function NewBudgetPage() {
                   {watch("items").map((item, index) => {
                     const product = products?.find((p: any) => p.id === item.productId)
                     const qty = Number(item.quantity) || 0
-                    const price = Number(item.unitPrice) || 0
+                    const basePrice = Number(item.unitPrice) || 0
+
+                    // Calculate total quantity for expense distribution
+                    const totalQty = watch("items").reduce((sum: number, i: any) =>
+                      sum + (Number(i.quantity) || 0), 0)
+
+                    // For FOB and CIF, distribute local expenses (non-Freight/Insurance) into unit price
+                    const localExpensePerUnit = totalQty > 0
+                      ? totals.localExpenses / totalQty
+                      : 0
+
+                    // Adjusted unit price includes local expenses for FOB/CIF
+                    const adjustedUnitPrice = (watch("incoterm") === "EXW" || watch("incoterm") === "FCA")
+                      ? basePrice
+                      : basePrice + localExpensePerUnit
+
                     return (
                       <div key={index} className="flex justify-between text-sm">
                         <span>{product?.title || "Product"} (x{qty})</span>
-                        <span>${(qty * price).toFixed(2)}</span>
+                        <span>${(qty * adjustedUnitPrice).toFixed(2)}</span>
                       </div>
                     )
                   })}
                   <Separator className="my-2" />
                   <div className="flex justify-between font-medium">
-                    <span>Subtotal (FOB Unit Prices)</span>
-                    <span>${totals.subtotal.toFixed(2)}</span>
+                    <span>Subtotal ({(watch("incoterm") === "EXW" || watch("incoterm") === "FCA") ? "Base" : "FOB"} Unit Prices)</span>
+                    <span>${((watch("incoterm") === "EXW" || watch("incoterm") === "FCA") ? totals.subtotal : totals.totalFOB).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -471,12 +487,8 @@ export default function NewBudgetPage() {
               {/* FOB */}
               {watch("incoterm") === "FOB" && (
                 <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Products Subtotal:</span>
-                    <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
-                  </div>
-                  {/* FOB typically includes inland freight/customs to port. 
-                      We assume 'expenses' here are those local costs. */}
+                  {/* FOB typically includes ALL expenses (local costs to get to port). 
+                      These are already distributed into the product unit prices above. */}
                   {expenses.length > 0 && (
                     <div className="space-y-1">
                       <span className="text-xs text-muted-foreground font-semibold">Local Costs (Included in FOB):</span>
@@ -487,78 +499,6 @@ export default function NewBudgetPage() {
                         </div>
                       ))}
                     </div>
-                  )}
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>FOB Total:</span>
-                      <span>${totals.totalFOB.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* CIF / CFR / CPT / CIP / DDP / DAP */}
-              {["CIF", "CFR", "CPT", "CIP", "DDP", "DAP"].includes(watch("incoterm")) && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">FOB Subtotal (Products + Local):</span>
-                    <span className="font-medium">${totals.totalFOB.toFixed(2)}</span>
-                  </div>
-
-                  {/* Freight */}
-                  {expenses.filter(e => e.type === "FREIGHT").length > 0 ? (
-                    expenses.filter(e => e.type === "FREIGHT").map((exp, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Freight ({exp.description}):</span>
-                        <span className="font-medium">${Number(exp.value).toFixed(2)}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex justify-between text-sm text-amber-600">
-                      <span>Freight (Missing):</span>
-                      <span>$0.00</span>
-                    </div>
-                  )}
-
-                  {/* Insurance (Only for CIF, CIP, DDP usually) */}
-                  {["CIF", "CIP", "DDP"].includes(watch("incoterm")) && (
-                    expenses.filter(e => e.type === "INSURANCE").length > 0 ? (
-                      expenses.filter(e => e.type === "INSURANCE").map((exp, i) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Insurance ({exp.description}):</span>
-                          <span className="font-medium">${Number(exp.value).toFixed(2)}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="flex justify-between text-sm text-amber-600">
-                        <span>Insurance (Missing):</span>
-                        <span>$0.00</span>
-                      </div>
-                    )
-                  )}
-
-                  {/* Other expenses for DDP/DAP if any (Duties etc) */}
-                  {expenses.filter(e => !["FREIGHT", "INSURANCE", "FIXED"].includes(e.type || "")).map((exp, i) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{exp.description}:</span>
-                      <span className="font-medium">${Number(exp.value).toFixed(2)}</span>
-                    </div>
-                  ))}
-
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>{watch("incoterm")} Total:</span>
-                      <span>${(totals.totalFOB +
-                        expenses.filter(e => e.type === "FREIGHT").reduce((sum, e) => sum + Number(e.value), 0) +
-                        (["CIF", "CIP", "DDP"].includes(watch("incoterm")) ? expenses.filter(e => e.type === "INSURANCE").reduce((sum, e) => sum + Number(e.value), 0) : 0)
-                        // Note: totalFOB already includes all expenses in current calculateTotals logic! 
-                        // We need to fix calculateTotals to NOT include International Freight/Insurance in FOB.
-                      ).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
           </CardContent>
         </Card>
 

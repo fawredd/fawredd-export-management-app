@@ -27,14 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await apiClient.getCurrentUser()
         setUser(userData)
-      } catch (error) {
+      } catch (error: any) {
         // Not logged in or token expired
-        console.error("Auth check failed:", error)
-        setUser(null)
-        // Force redirect if not on login page
-        if (window.location.pathname !== '/login') {
-          router.push('/login')
+        // Only log non-401 errors to avoid console noise
+        if (error?.response?.status !== 401) {
+          console.error("Auth check failed:", error)
         }
+        setUser(null)
+        // Middleware handles redirect to login, no need for client-side redirect
       } finally {
         setIsLoading(false)
       }

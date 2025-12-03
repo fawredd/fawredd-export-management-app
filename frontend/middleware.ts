@@ -16,7 +16,7 @@ async function verifyToken(token: string) {
 
 export async function middleware(request: NextRequest) {
     const token = request.cookies.get('token')?.value
-    const isLoginPage = request.nextUrl.pathname === '/login'
+    const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register'
     const isPublicPath = request.nextUrl.pathname.startsWith('/api/public') ||
         request.nextUrl.pathname.startsWith('/_next') ||
         request.nextUrl.pathname.startsWith('/static') ||
@@ -24,15 +24,15 @@ export async function middleware(request: NextRequest) {
 
     // console.log(`[Middleware] Path: ${request.nextUrl.pathname}, Token: ${token ? 'Present' : 'Missing'}, Public: ${isPublicPath}`)
 
-    // If trying to access login page while authenticated
-    if (isLoginPage && token) {
+    // If trying to access login/register page while authenticated
+    if (isAuthPage && token) {
         const isValid = await verifyToken(token)
         if (isValid) {
-            console.log('[Middleware] Valid token on login page, redirecting to dashboard')
+            console.log('[Middleware] Valid token on auth page, redirecting to dashboard')
             return NextResponse.redirect(new URL('/', request.url))
         } else {
-            // Invalid token, let them stay on login page but clear the cookie
-            console.log('[Middleware] Invalid token on login page, clearing cookie')
+            // Invalid token, let them stay on auth page but clear the cookie
+            console.log('[Middleware] Invalid token on auth page, clearing cookie')
             const response = NextResponse.next()
             response.cookies.delete('token')
             return response
@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // If trying to access protected route
-    if (!isLoginPage && !isPublicPath) {
+    if (!isAuthPage && !isPublicPath) {
         if (!token) {
             console.log('[Middleware] No token, redirecting to login')
             return NextResponse.redirect(new URL('/login', request.url))

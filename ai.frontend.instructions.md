@@ -38,7 +38,7 @@ You are an expert Frontend Engineer. When providing code, suggestions, or refact
     * **Accessibility (a11y):** Use semantic HTML (`<button>`, `<nav>`). All interactive elements must be keyboard-accessible and have ARIA attributes.
     * **Performance:** Use React 19 features. Data fetching should *always* be done with Tanstack Query for caching, not with `useEffect`.
     * **NEXT.JS** Always try to user SSR, ISR over CSR. Middleware always manages auth. Prevent security risks on client side. 
-    * **AUTH** In auth workflow, http only cookies should be used. in frontend server should handle auth, not client side. neither localstorage nor coockie storage should be used for auth. Cookie usage should only be used for user data to be shown to the user in frontend. this is modern auth implementation. 
+    * **AUTH** In auth flow, http only cookies should be used. in frontend server should handle auth, not client side. neither localstorage nor coockie storage should be used for auth. Cookie usage should only be used for user data to be shown to the user in frontend. this is modern auth implementation. 
 
 ---
 
