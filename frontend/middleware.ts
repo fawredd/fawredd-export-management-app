@@ -9,13 +9,17 @@ export function middleware(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/static') ||
         request.nextUrl.pathname === '/favicon.ico'
 
+    console.log(`[Middleware] Path: ${request.nextUrl.pathname}, Token: ${token ? 'Present' : 'Missing'}, Public: ${isPublicPath}`)
+
     // If trying to access login page while authenticated, redirect to dashboard
     if (isLoginPage && token) {
+        console.log('[Middleware] Redirecting to dashboard')
         return NextResponse.redirect(new URL('/', request.url))
     }
 
     // If trying to access protected route without token, redirect to login
     if (!token && !isLoginPage && !isPublicPath) {
+        console.log('[Middleware] Redirecting to login')
         return NextResponse.redirect(new URL('/login', request.url))
     }
 

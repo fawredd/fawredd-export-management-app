@@ -29,14 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData)
       } catch (error) {
         // Not logged in or token expired
+        console.error("Auth check failed:", error)
         setUser(null)
+        // Force redirect if not on login page
+        if (window.location.pathname !== '/login') {
+          router.push('/login')
+        }
       } finally {
         setIsLoading(false)
       }
     }
 
     checkAuth()
-  }, [])
+  }, [router])
 
   const login = async (email: string, password: string) => {
     const response = await apiClient.login({ email, password })

@@ -66,11 +66,16 @@ export default function ProductsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiClient.createProduct(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] })
-      setIsCreateDialogOpen(false)
-      resetForm()
-      toast.success("Product created successfully")
+    onSuccess: (newProduct) => {
+      // If there are files selected, upload them now
+      if (selectedFiles && selectedFiles.length > 0) {
+        uploadImagesMutation.mutate({ productId: newProduct.id, files: selectedFiles })
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["products"] })
+        setIsCreateDialogOpen(false)
+        resetForm()
+        toast.success("Product created successfully")
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create product")
@@ -79,11 +84,16 @@ export default function ProductsPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.updateProduct(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] })
-      setEditingProduct(null)
-      resetForm()
-      toast.success("Product updated successfully")
+    onSuccess: (updatedProduct) => {
+      // If there are files selected, upload them now
+      if (selectedFiles && selectedFiles.length > 0) {
+        uploadImagesMutation.mutate({ productId: updatedProduct.id, files: selectedFiles })
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["products"] })
+        setEditingProduct(null)
+        resetForm()
+        toast.success("Product updated successfully")
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update product")
@@ -115,10 +125,40 @@ export default function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] })
       setSelectedFiles(null)
-      toast.success("Images uploaded successfully")
+      setIsCreateDialogOpen(false)
+      setEditingProduct(null)
+      resetForm()
+      toast.success("Product saved with images")
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to upload images")
+    },
+  })
+
+  const deleteImageMutation = useMutation({
+    mutationFn: ({ productId, imageUrl }: { productId: string; imageUrl: string }) => 
+      apiClient.deleteProductImage(productId, imageUrl),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] })
+      // Update local state to reflect change immediately if needed, 
+      // but invalidating query is safer to sync with backend
+      if (editingProduct) {
+        setEditingProduct({
+          ...editingProduct,
+          imageUrls: editingProduct.imageUrls.filter((url: string) => url !== data.product.imageUrls.find((u: string) => !editingProduct.imageUrls.includes(u))) 
+          // Actually the backend returns the updated product, so we can just update editingProduct
+          // But wait, the backend response format in controller is { message, product }
+          // Let's rely on the invalidated query or update from response
+        })
+        // A simpler way is to just close and reopen or let the query update the list. 
+        // Since we are inside the dialog, we need the editingProduct state to update.
+        // The backend returns { message, product }.
+        setEditingProduct(data.product)
+      }
+      toast.success("Image deleted successfully")
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete image")
     },
   })
 
@@ -377,6 +417,73 @@ export default function ProductsPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Image Upload Section - Moved to Top */}
+            <div className="space-y-2 p-4 border rounded-md bg-muted/20">
+              <Label>Product Images</Label>
+              <div className="space-y-4">
+                {/* Existing Images (Edit Mode) */}
+                {editingProduct && editingProduct.imageUrls && editingProduct.imageUrls.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Current Images</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {editingProduct.imageUrls.map((url: string, index: number) => (
+                        <div key={index} className="relative group aspect-square">
+                          <img src={url} alt={`Product ${index + 1}`} className="w-full h-full object-cover rounded border" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this image?")) {
+                                deleteImageMutation.mutate({ productId: editingProduct.id, imageUrl: url })
+                              }
+                            }}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Image Selection */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    {editingProduct ? "Add More Images" : "Select Images"}
+                  </Label>
+                  <Input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setSelectedFiles(e.target.files)
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+
+                  {/* Preview of Selected Files */}
+                  {selectedFiles && selectedFiles.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {Array.from(selectedFiles).map((file, index) => (
+                        <div key={index} className="relative aspect-square">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index}`}
+                            className="w-full h-full object-cover rounded border opacity-70"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="bg-black/50 text-white text-xs px-2 py-1 rounded">New</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sku">SKU *</Label>
@@ -584,43 +691,6 @@ export default function ProductsPage() {
               </div>
             )}
 
-            {/* Image Upload - Only show when editing */}
-            {editingProduct && (
-              <div className="space-y-2 pt-4 border-t">
-                <Label>Product Images</Label>
-                <div className="space-y-2">
-                  {editingProduct.imageUrls && editingProduct.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2">
-                      {editingProduct.imageUrls.map((url: string, index: number) => (
-                        <div key={index} className="relative group">
-                          <img src={url} alt={`Product ${index + 1}`} className="w-full h-20 object-cover rounded" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => setSelectedFiles(e.target.files)}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (selectedFiles && editingProduct) {
-                          uploadImagesMutation.mutate({ productId: editingProduct.id, files: selectedFiles })
-                        }
-                      }}
-                      disabled={!selectedFiles || uploadImagesMutation.isPending}
-                    >
-                      {uploadImagesMutation.isPending ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <DialogFooter>
               <Button
                 type="button"
@@ -629,16 +699,17 @@ export default function ProductsPage() {
                   setIsCreateDialogOpen(false)
                   setEditingProduct(null)
                   resetForm()
+                  setSelectedFiles(null)
                 }}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {createMutation.isPending || updateMutation.isPending
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || uploadImagesMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending || uploadImagesMutation.isPending
                   ? "Saving..."
                   : editingProduct
-                    ? "Update"
-                    : "Create"}
+                    ? "Update Product"
+                    : "Create Product"}
               </Button>
             </DialogFooter>
           </form>

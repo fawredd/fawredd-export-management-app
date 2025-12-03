@@ -15,7 +15,6 @@ export class ProductRepository {
         provider: true,
         priceHistory: {
           orderBy: { date: 'desc' },
-          take: 1,
         },
       },
     });

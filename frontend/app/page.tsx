@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function DashboardPage() {
   const router = useRouter()
 
-  
+
   // Auth check handled by middleware
 
 
@@ -122,6 +122,34 @@ export default function DashboardPage() {
             value={`$${totalRevenue.toLocaleString('en-US')}`}
             subtitle={`Current Month : $${currentMonthRevenue.toLocaleString('en-US')}`}
           />
+        </div>
+
+        {/* Budget Status Overview */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget Status Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'INVOICED'].map((status) => {
+                  const count = budgets?.filter((b: any) => b.status === status).length || 0
+                  const total = budgets?.length || 1 // Avoid division by zero
+                  const percentage = Math.round((count / total) * 100)
+
+                  return (
+                    <div key={status} className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">{status.replace('_', ' ')}</p>
+                        <p className="text-xs text-muted-foreground">{count} budgets</p>
+                      </div>
+                      <div className="font-bold">{percentage}%</div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>
