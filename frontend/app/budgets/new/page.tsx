@@ -499,6 +499,16 @@ export default function NewBudgetPage() {
                         </div>
                       ))}
                     </div>
+                  )}
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>FOB Total:</span>
+                      <span>${totals.totalFOB.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </CardContent>
         </Card>
 
