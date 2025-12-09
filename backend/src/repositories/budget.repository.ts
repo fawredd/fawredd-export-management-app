@@ -2,7 +2,7 @@
  * Budget repository - Database access layer for budgets
  */
 
-import { PrismaClient, Incoterm, BudgetStatus } from '@prisma/client';
+import { PrismaClient, BudgetStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
@@ -46,37 +46,40 @@ export class BudgetRepository {
   }
 
   async create(data: {
-    clientId: string;
-    incoterm: Incoterm;
-    totalAmount?: Decimal;
-    budgetItems: any[];
-    costs?: any[];
-  }) {
-    return prisma.budget.create({
-      data: {
-        clientId: data.clientId,
-        incoterm: data.incoterm,
-        totalAmount: data.totalAmount,
-        budgetItems: {
-          create: data.budgetItems,
-        },
-        costs: data.costs
-          ? {
-            connect: data.costs.map((costId) => ({ id: costId })),
-          }
-          : undefined,
+  clientId: string;
+  incotermId: string;  // CHANGED from Incoterm to string
+  organizationId?: string;
+  totalAmount?: Decimal;
+  budgetItems: any[];
+  costs?: any[];
+}) {
+  return prisma.budget.create({
+    data: {
+      clientId: data.clientId,
+      incotermId: data.incotermId,  // CHANGED
+      organizationId: data.organizationId,
+      totalAmount: data.totalAmount,
+      budgetItems: {
+        create: data.budgetItems,
       },
-      include: {
-        client: true,
-        budgetItems: {
-          include: {
-            product: true,
-          },
+      costs: data.costs
+        ? {
+          connect: data.costs.map((costId) => ({ id: costId })),
+        }
+        : undefined,
+    },
+    include: {
+      client: true,
+      incoterm: true,  // ADD THIS
+      budgetItems: {
+        include: {
+          product: true,
         },
-        costs: true,
       },
-    });
-  }
+      costs: true,
+    },
+  });
+}
 
   async updateStatus(id: string, status: BudgetStatus) {
     return prisma.budget.update({
