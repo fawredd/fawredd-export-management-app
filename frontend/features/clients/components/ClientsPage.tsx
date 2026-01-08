@@ -3,8 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { apiClient } from "@/lib/api-client"
-import { AppLayout } from "@/components/app-layout"
-import { PageHeader } from "@/components/page-header"
+import { AppLayout } from "@/components/layout/AppLayout"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { Client } from "@/shared/types"
-import { ClientFormDialog } from "@/components/clients/client-form-dialog"
+import { ClientFormDialog } from "./client-form-dialog"
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("")

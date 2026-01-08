@@ -3,8 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { apiClient } from "@/lib/api-client"
-import { AppLayout } from "@/components/app-layout"
-import { PageHeader } from "@/components/page-header"
+import { AppLayout } from "@/components/layout/AppLayout"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import type { Cost, CostType } from "@/shared/types"
-import { CostFormDialog } from "@/components/costs/cost-form-dialog"
+import { CostFormDialog } from "./cost-form-dialog"
 
 const costTypeColors: Record<CostType, string> = {
   FIXED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
