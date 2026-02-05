@@ -2,12 +2,17 @@
 
 A Docker-based monorepo for export management used by Argentine manufacturers, traders, and logistics stakeholders.
 
-## AI Assistant
+## AI Assistant & Agent Guidelines
 
-use the instructions files to generate code for the project:
-- ai.monorepo.context.md
-- ai.backend.instructions.md
-- ai.frontend.instructions.md
+Use the instruction files and agent guides to generate code for the project:
+
+- `ai.monorepo.context.md`
+- `ai.backend.instructions.md`
+- `ai.frontend.instructions.md`
+- `AGENTS.md` — workflow, permissions, and approval template for AI agents
+- `SKILLS.md` — concise skills index used for tasks, tests, and PRs
+
+**Agents must follow `AGENTS.md` and ask for explicit human approval before implementing new features.**
 
 ## Tech Stack
 
@@ -18,13 +23,13 @@ use the instructions files to generate code for the project:
 - **Testing**: Jest, Supertest, Playwright
 
 ## Project Structure
-├── backend/          # Express API server
-├── frontend/         # Next.js application
-├── .github/          # CI/CD workflows
+
+├── backend/ # Express API server
+├── frontend/ # Next.js application
+├── .github/ # CI/CD workflows
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
-
 
 ## Prerequisites
 
@@ -39,20 +44,26 @@ Copy `.env.example` to `.env` and update the values:
 ```bash
 cp .env.example .env
 ```
+
 ## Required variables:
+
 # Database
+
 DATABASE_URL="postgresql://postgres:postgres@postgres:5432/export_management"
 
 # Backend
+
 PORT=4000
 CORS_ORIGIN=http://localhost:3000
 JWT_SECRET=replace-with-secure-jwt-secret
 JWT_EXPIRES_IN=1d
 
 # Frontend
+
 NEXT_PUBLIC_API_URL=http://localhost:4000
 
 # NextAuth
+
 NEXTAUTH_URL=http://localhost:4000
 NEXTAUTH_SECRET=replace-with-secure-nextauth-secret
 
@@ -65,7 +76,6 @@ git clone <repository-url>
 cd fawredd-export-management-monorepo
 ```
 
-
 2. **Set up environment variables**
 
 ```shellscript
@@ -73,13 +83,11 @@ cp .env.example .env
 # Edit .env with your values
 ```
 
-
 3. **Start all services with Docker Compose**
 
 ```shellscript
 docker-compose up --build
 ```
-
 
 4. **Run Prisma migrations** (in a new terminal)
 
@@ -87,12 +95,11 @@ docker-compose up --build
 docker exec -it export_backend npx prisma migrate dev
 ```
 
-
 5. **Access the applications**
 
 1. Frontend: [http://localhost:3000](http://localhost:3000)
-2. Backend API: [http://localhost:4000](http://localhost:4000)
-3. API Documentation: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
+1. Backend API: [http://localhost:4000](http://localhost:4000)
+1. API Documentation: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
 
 ## How to Deploy (Docker)
 
@@ -101,7 +108,6 @@ docker exec -it export_backend npx prisma migrate dev
 ```shellscript
 docker-compose -f docker-compose.prod.yml build
 ```
-
 
 2. **Push to container registry**
 
@@ -112,13 +118,12 @@ docker push your-registry/export-backend:latest
 docker push your-registry/export-frontend:latest
 ```
 
-
 3. **Deploy to your infrastructure**
 
 1. Update environment variables for production
-2. Ensure DATABASE_URL points to production database
-3. Run migrations: `npx prisma migrate deploy`
-4. Start containers with production compose file
+1. Ensure DATABASE_URL points to production database
+1. Run migrations: `npx prisma migrate deploy`
+1. Start containers with production compose file
 
 ## Development
 
@@ -151,6 +156,20 @@ npm install
 npm run dev
 ```
 
+### Local Agent: Lint Fix Mode
+
+You can run the local agent lint fixer from the repo root (uses `scripts/agent-lint-local.sh`).
+
+```bash
+# Make executable once
+chmod +x scripts/agent-lint-local.sh
+
+# Run via npm from repo root
+npm run agent:lint-local
+```
+
+The script will run lint fixes for `backend` and `frontend`, run basic tests, and create a branch with changes if fixes are made. If you have the `gh` CLI installed, it can also open a draft PR automatically.
+
 ### Running Tests
 
 ```shellscript
@@ -165,6 +184,7 @@ docker exec -it export_frontend npm run test:e2e
 ```
 
 ## API Documentation
+
 Once the backend is running, visit [http://localhost:4000/api/docs](http://localhost:4000/api/docs) for interactive API documentation (Swagger/OpenAPI).
 
 ## Features
