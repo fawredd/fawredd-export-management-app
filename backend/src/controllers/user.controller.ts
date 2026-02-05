@@ -12,7 +12,7 @@ import { Role } from '@prisma/client';
 const userRepository = new UserRepository();
 
 export class UserController {
-  async getUsers(req: AuthRequest, res: Response, next: NextFunction) {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       // If admin, return all users. If not, return users from same organization
       // For now, we'll just return all users if admin, or self if not
@@ -30,7 +30,7 @@ export class UserController {
     }
   }
 
-  async getUserById(req: AuthRequest, res: Response, next: NextFunction) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const organizationId = req.user?.role === Role.ADMIN ? undefined : req.user?.organizationId;
@@ -48,7 +48,7 @@ export class UserController {
     }
   }
 
-  async createUser(req: AuthRequest, res: Response, next: NextFunction) {
+  async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { email, password, name, role, organizationId } = req.body;
 
@@ -86,7 +86,7 @@ export class UserController {
     }
   }
 
-  async updateUser(req: AuthRequest, res: Response, next: NextFunction) {
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const { name, email, role, password } = req.body;
@@ -107,7 +107,7 @@ export class UserController {
     }
   }
 
-  async deleteUser(req: AuthRequest, res: Response, next: NextFunction) {
+  async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 

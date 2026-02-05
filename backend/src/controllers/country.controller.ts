@@ -15,7 +15,7 @@ export class CountryController {
    * @summary Get all countries
    * @returns {Country[]} 200 - List of countries
    */
-  async getAllCountries(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       const countries = await countryService.getAllCountries();
 
@@ -33,7 +33,7 @@ export class CountryController {
    * @summary Get country by ID
    * @returns {Country} 200 - Country details
    */
-  async getCountryById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = countryIdSchema.parse(req.params);
       const country = await countryService.getCountryById(id);
@@ -52,7 +52,7 @@ export class CountryController {
    * @summary Create new country
    * @returns {Country} 201 - Created country
    */
-  async createCountry(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response, next: NextFunction) {
     try {
       const data = createCountrySchema.parse(req.body);
       const country = await countryService.createCountry(data);
@@ -71,7 +71,7 @@ export class CountryController {
    * @summary Update country
    * @returns {Country} 200 - Updated country
    */
-  async updateCountry(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = countryIdSchema.parse(req.params);
       const data = updateCountrySchema.parse(req.body);
@@ -91,7 +91,7 @@ export class CountryController {
    * @summary Delete country
    * @returns {Object} 200 - Success message
    */
-  async deleteCountry(req: Request, res: Response, next: NextFunction) {
+  async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = countryIdSchema.parse(req.params);
       await countryService.deleteCountry(id);

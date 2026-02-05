@@ -13,30 +13,30 @@ const router = Router();
  */
 
 // Public routes (authenticated users)
-router.get('/', authenticate, countryController.getAllCountries.bind(countryController));
+router.get('/', authenticate, countryController.getAll.bind(countryController));
 
-router.get('/:id', authenticate, countryController.getCountryById.bind(countryController));
+router.get('/:id', authenticate, countryController.getById.bind(countryController));
 
 // Admin only routes
 router.post(
   '/',
   authenticate,
   authorize(Role.ADMIN),
-  countryController.createCountry.bind(countryController),
+  countryController.create.bind(countryController),
 );
 
 router.put(
   '/:id',
   authenticate,
   authorize(Role.ADMIN),
-  countryController.updateCountry.bind(countryController),
+  countryController.update.bind(countryController),
 );
 
 router.delete(
   '/:id',
   authenticate,
   authorize(Role.ADMIN),
-  countryController.deleteCountry.bind(countryController),
+  countryController.delete.bind(countryController),
 );
 
 export default router;

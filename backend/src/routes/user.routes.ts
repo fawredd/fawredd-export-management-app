@@ -16,20 +16,20 @@ router.use(authenticate);
 // Admin only routes (or restricted logic inside controller)
 router.get(
   '/',
-  authorize([Role.ADMIN, Role.MANUFACTURER, Role.TRADER]),
-  userController.getUsers.bind(userController),
+  authorize(Role.ADMIN, Role.MANUFACTURER, Role.TRADER),
+  userController.getAll.bind(userController),
 );
-router.get('/:id', userController.getUser.bind(userController));
+router.get('/:id', userController.getById.bind(userController));
 router.post(
   '/',
-  authorize([Role.ADMIN, Role.MANUFACTURER, Role.TRADER]),
-  userController.createUser.bind(userController),
+  authorize(Role.ADMIN, Role.MANUFACTURER, Role.TRADER),
+  userController.create.bind(userController),
 );
 router.put(
   '/:id',
-  authorize([Role.ADMIN, Role.MANUFACTURER, Role.TRADER]),
-  userController.updateUser.bind(userController),
+  authorize(Role.ADMIN, Role.MANUFACTURER, Role.TRADER),
+  userController.update.bind(userController),
 );
-router.delete('/:id', authorize([Role.ADMIN]), userController.deleteUser.bind(userController));
+router.delete('/:id', authorize(Role.ADMIN), userController.delete.bind(userController));
 
 export default router;

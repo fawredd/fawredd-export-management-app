@@ -13,30 +13,30 @@ const router = Router();
  */
 
 // All authenticated users can view export tasks
-router.get('/', authenticate, exportTaskController.getAllExportTasks.bind(exportTaskController));
+router.get('/', authenticate, exportTaskController.getAll.bind(exportTaskController));
 
-router.get('/:id', authenticate, exportTaskController.getExportTaskById.bind(exportTaskController));
+router.get('/:id', authenticate, exportTaskController.getById.bind(exportTaskController));
 
 // Admin, Trader, and Manufacturer can create/update tasks
 router.post(
   '/',
   authenticate,
   authorize(Role.ADMIN, Role.TRADER, Role.MANUFACTURER),
-  exportTaskController.createExportTask.bind(exportTaskController),
+  exportTaskController.create.bind(exportTaskController),
 );
 
 router.put(
   '/:id',
   authenticate,
   authorize(Role.ADMIN, Role.TRADER, Role.MANUFACTURER),
-  exportTaskController.updateExportTask.bind(exportTaskController),
+  exportTaskController.update.bind(exportTaskController),
 );
 
 router.patch(
   '/:id/status',
   authenticate,
   authorize(Role.ADMIN, Role.TRADER, Role.MANUFACTURER),
-  exportTaskController.updateTaskStatus.bind(exportTaskController),
+  exportTaskController.updateStatus.bind(exportTaskController),
 );
 
 // Admin only delete
@@ -44,7 +44,7 @@ router.delete(
   '/:id',
   authenticate,
   authorize(Role.ADMIN),
-  exportTaskController.deleteExportTask.bind(exportTaskController),
+  exportTaskController.delete.bind(exportTaskController),
 );
 
 export default router;

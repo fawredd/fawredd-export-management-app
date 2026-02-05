@@ -19,7 +19,7 @@ export class ExportTaskController {
    * @summary Get all export tasks
    * @returns {ExportTask[]} 200 - List of export tasks with pagination
    */
-  async getAllExportTasks(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
@@ -49,7 +49,7 @@ export class ExportTaskController {
    * @summary Get export task by ID
    * @returns {ExportTask} 200 - Export task details
    */
-  async getExportTaskById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
       const exportTask = await exportTaskService.getExportTaskById(id, req.user?.organizationId);
@@ -124,7 +124,7 @@ export class ExportTaskController {
    * @summary Delete export task
    * @returns {Object} 200 - Success message
    */
-  async deleteExportTask(req: AuthRequest, res: Response, next: NextFunction) {
+  async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
       await exportTaskService.deleteExportTask(id, req.user?.organizationId);
