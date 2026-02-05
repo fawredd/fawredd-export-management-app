@@ -10,7 +10,11 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # 🌟 Configuración para chequear si Postgres está listo
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'  
+    # 🌟 Configuración para chequear si Postgres está listo
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -24,6 +28,10 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 5s
@@ -51,15 +59,19 @@ services:
       - "host.docker.internal:host-gateway" 
     volumes:
       - ./backend:/usr/src/app
-      - /usr/src/app/node_modules 
+      - /usr/src/app/node_modules
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'   
     # 💥 EJECUCIÓN CRÍTICA: Inicializa la DB y luego arranca la app
     # 1. npx prisma migrate reset --force: Resetea la DB y aplica las migraciones (uso en desarrollo)
     # 2. && npm run dev: Arranca el servidor Express/Node
     #command: sh -c "npx prisma migrate reset --force && npm run dev"
     command: >
       sh -c "
-        npx prisma db push --accept-data-loss &&
-        npx prisma db execute --file=./prisma/seed.sql --schema=./prisma/schema.prisma || true &&
+        npx prisma db push --force-reset --accept-data-loss &&
+        npx ts-node prisma/seed.ts || true &&
         npm run dev
       "
   
@@ -78,6 +90,10 @@ services:
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'   
     command: sh -c "rm -rf .next &&npm install && npm run dev -- -H 0.0.0.0 -p ${FRONTEND_PORT}"
 
 volumes:

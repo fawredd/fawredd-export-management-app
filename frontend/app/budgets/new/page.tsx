@@ -13,11 +13,13 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Plus, Trash2 } from "lucide-react"
+import { Loader2, Plus, Trash2, Calculator } from "lucide-react"
 import { Incoterm } from "@/shared/types"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { usePricingCalculator, type PricingCalculationResponse } from "@/hooks/usePricingCalculator"
+import { PricingBreakdown, PricingSummary } from "@/components/PricingBreakdown"
 
 const budgetSchema = z.object({
   clientId: z.string().min(1, "Client is required"),
@@ -58,6 +60,11 @@ export default function NewBudgetPage() {
     title: "",
     description: "",
   })
+
+  // Pricing calculator state
+  const [showPricingDialog, setShowPricingDialog] = useState(false)
+  const [pricingResults, setPricingResults] = useState<PricingCalculationResponse | null>(null)
+  const { calculatePricing } = usePricingCalculator()
 
   const { data: clients } = useQuery({
     queryKey: ["clients"],
@@ -194,6 +201,48 @@ export default function NewBudgetPage() {
   const handleCreateProduct = (e: React.FormEvent) => {
     e.preventDefault()
     createProductMutation.mutate(newProductData)
+  }
+
+  // Pricing calculator handler
+  const handleCalculatePricing = async () => {
+    const items = watch('items')
+    const selectedExpenses = expenses.map(e => e.id).filter(Boolean) as string[]
+
+    // Validate that we have products with quantities
+    const validItems = items.filter(item => item.productId && item.quantity)
+    if (validItems.length === 0) {
+      toast.error('Please add at least one product with quantity')
+      return
+    }
+
+    try {
+      const result = await calculatePricing.mutateAsync({
+        products: validItems.map(item => ({
+          productId: item.productId,
+          quantity: parseInt(item.quantity),
+          basePrice: item.unitPrice ? parseFloat(item.unitPrice) : undefined,
+        })),
+        expenses: selectedExpenses,
+        incoterm: watch('incoterm'),
+      })
+
+      setPricingResults(result)
+      setShowPricingDialog(true)
+    } catch (error) {
+      // Error is handled by the mutation
+    }
+  }
+
+  // Apply calculated prices to form
+  const handleApplyPrices = () => {
+    if (!pricingResults) return
+
+    pricingResults.products.forEach((result, index) => {
+      setValue(`items.${index}.unitPrice`, result.unitPrice.toFixed(2))
+    })
+
+    setShowPricingDialog(false)
+    toast.success('Calculated prices applied to budget')
   }
 
   return (
@@ -410,6 +459,38 @@ export default function NewBudgetPage() {
             )}
           </CardContent>
         </Card>
+        {/* Calculate Pricing Button */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg">Calculate Export Pricing</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Get detailed pricing breakdown based on selected Incoterm and expenses
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={handleCalculatePricing}
+                disabled={calculatePricing.isPending || !watch('items').some(i => i.productId && i.quantity)}
+                size="lg"
+                className="gap-2"
+              >
+                {calculatePricing.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Calculating...
+                  </>
+                ) : (
+                  <>
+                    <Calculator className="h-4 w-4" />
+                    Calculate Pricing
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -508,6 +589,66 @@ export default function NewBudgetPage() {
                   </div>
                 </>
               )}
+
+              {/* CIF / CFR / CPT / CIP / DDP / DAP */}
+              {["CIF", "CFR", "CPT", "CIP", "DDP", "DAP"].includes(watch("incoterm")) && (
+                <>
+                  {/* Show local expenses breakdown if any */}
+                  {expenses.filter(e => !["FREIGHT", "INSURANCE"].includes(e.type || "")).length > 0 && (
+                    <div className="space-y-1 mb-2">
+                      <span className="text-xs text-muted-foreground font-semibold">Local Costs (Included in FOB):</span>
+                      {expenses.filter(e => !["FREIGHT", "INSURANCE"].includes(e.type || "")).map((exp, i) => (
+                        <div key={i} className="flex justify-between text-sm pl-2">
+                          <span className="text-muted-foreground">{exp.description}:</span>
+                          <span>${Number(exp.value).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">FOB Subtotal (Products + Local):</span>
+                    <span className="font-medium">${totals.totalFOB.toFixed(2)}</span>
+                  </div>
+
+                  {/* Freight */}
+                  {expenses.filter(e => e.type === "FREIGHT").length > 0 ? (
+                    expenses.filter(e => e.type === "FREIGHT").map((exp, i) => (
+                      <div key={i} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Freight ({exp.description}):</span>
+                        <span className="font-medium">${Number(exp.value).toFixed(2)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex justify-between text-sm text-amber-600">
+                      <span>Freight (Missing):</span>
+                      <span>$0.00</span>
+                    </div>
+                  )}
+
+                  {/* Insurance */}
+                  {expenses.filter(e => e.type === "INSURANCE").length > 0 ? (
+                    expenses.filter(e => e.type === "INSURANCE").map((exp, i) => (
+                      <div key={i} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Insurance ({exp.description}):</span>
+                        <span className="font-medium">${Number(exp.value).toFixed(2)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex justify-between text-sm text-amber-600">
+                      <span>Insurance (Missing):</span>
+                      <span>$0.00</span>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>{watch("incoterm")} Total:</span>
+                      <span>${totals.totalCIF.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -526,7 +667,64 @@ export default function NewBudgetPage() {
               "Create Budget"
             )}
           </Button>
+          {/* Pricing Calculator Dialog */}
+      <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Pricing Calculation - {pricingResults?.incoterm}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed cost breakdown for each product based on {pricingResults?.incoterm} Incoterm
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pricingResults && (
+            <div className="space-y-4 py-4">
+              {/* Product Breakdowns */}
+              <div className="grid gap-4">
+                {pricingResults.products.map((result) => (
+                  <PricingBreakdown 
+                    key={result.productId} 
+                    result={result}
+                    currency={pricingResults.metadata.currency}
+                  />
+                ))}
+              </div>
+
+              {/* Summary */}
+              <PricingSummary
+                results={pricingResults.products}
+                incoterm={pricingResults.incoterm}
+                metadata={pricingResults.metadata}
+                currency={pricingResults.metadata.currency}
+              />
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPricingDialog(false)}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              onClick={handleApplyPrices}
+              className="gap-2"
+            >
+              <Calculator className="h-4 w-4" />
+              Apply Prices to Budget
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
         </div>
+
       </form>
 
       {/* Create Client Dialog */}

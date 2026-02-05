@@ -6,7 +6,7 @@ import { BudgetRepository } from '../repositories/budget.repository';
 import { ProductRepository } from '../repositories/product.repository';
 import { calculateBudget, toPrismaDecimal } from '../utils/budget-calculator.util';
 import { AppError } from '../middlewares/error.middleware';
-import { Incoterm, BudgetStatus, PrismaClient } from '@prisma/client';
+import { BudgetStatus, PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
 
 const budgetRepository = new BudgetRepository();
@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 export class BudgetService {
   async createBudget(data: {
     clientId: string;
-    incoterm: Incoterm;
+    incoterm: string;  // Now expects incoterm NAME (e.g., "FOB")
     items: Array<{
       productId: string;
       quantity: number;
@@ -24,6 +24,19 @@ export class BudgetService {
     }>;
     costIds?: string[];
   }) {
+    // Find the incoterm by name to get its ID
+    const incoterm = await prisma.incoterm.findUnique({
+      where: { name: data.incoterm },
+    });
+
+    if (!incoterm) {
+      throw new AppError(400, `Invalid incoterm: ${data.incoterm}`);
+    }
+
+    // Get user's organization
+    const user = await prisma.user.findFirst();
+    const organizationId = user?.organizationId || null;
+
     // Fetch products to get weight and volume
     const products = await Promise.all(
       data.items.map((item) => productRepository.findById(item.productId)),
@@ -52,16 +65,16 @@ export class BudgetService {
     // Prepare costs for calculation
     const costsForCalculation = costs.map((cost) => ({
       id: cost.id,
-      name: cost.name,
+      name: cost.description || 'Cost',
       type: cost.type,
       value: Number(cost.value),
     }));
 
-    // Calculate budget
+    // Calculate budget using incoterm NAME for the calculator
     const calculation = calculateBudget(
       itemsWithDetails,
       costsForCalculation,
-      data.incoterm,
+      data.incoterm as any,  // The calculator expects the string name
       0, // Default duty rate, can be customized per product
     );
 
@@ -80,7 +93,8 @@ export class BudgetService {
     // Create budget with calculation breakdowns
     const budget = await budgetRepository.create({
       clientId: data.clientId,
-      incoterm: data.incoterm,
+      incotermId: incoterm.id,  // Use incotermId
+      organizationId,
       totalAmount: toPrismaDecimal(calculation.totalAmount),
       budgetItems,
       costs: data.costIds,
@@ -117,29 +131,22 @@ export class BudgetService {
     return budgetRepository.delete(id);
   }
 
-  /**
-   * Generate a unique share token for budget sharing
-   * @param id Budget ID
-   * @param expiresInDays Optional expiration in days (default: 30)
-   * @returns Updated budget with shareToken
-   */
   async generateShareToken(id: string, expiresInDays: number = 30) {
-    const budget = await budgetRepository.findById(id); // Changed from this.findById to budgetRepository.findById
+    const budget = await budgetRepository.findById(id);
     if (!budget) {
       throw new AppError(404, 'Budget not found');
     }
 
-    // Generate unique token
-    const shareToken = nanoid(16); // 16 character unique ID
-
-    // Calculate expiration date
+    const shareToken = nanoid(32);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
-    // Update budget with share token and expiration
-    // Assuming budgetRepository has an update method that can take partial data
-    return budgetRepository.update(id, {
-      status: BudgetStatus.SENT,
+    return prisma.budget.update({
+      where: { id },
+      data: {
+        shareToken,
+        expiresAt,
+      },
     });
   }
 }

@@ -20,6 +20,7 @@ model Organization {
   clients     Client[]
   products    Product[]
   budgets     Budget[]
+  pricingConfiguration  PricingConfiguration?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -124,13 +125,17 @@ model Product {
 }
 
 model TariffPosition {
-  id          String    @id @default(cuid())
-  code        String    @unique
-  description String
-  dutyRate    Decimal?  @db.Decimal(8, 4)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  code                 String    @unique
+  description          String
+  dutyRate             Decimal?  @db.Decimal(8, 4)  // Import duty rate
+  adValoremRate        Decimal?  @db.Decimal(8, 4)  // Export duty percentage (DEX)
+  fixedExportDuty      Decimal?  @db.Decimal(20, 6) // Fixed export duty amount
+  exportDutyMinAmount  Decimal?  @db.Decimal(20, 6) // Minimum export duty
+  exportDutyMaxAmount  Decimal?  @db.Decimal(20, 6) // Maximum export duty
+  products             Product[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 model UnitOfMeasure {
@@ -205,13 +210,22 @@ model Country {
 // ============================================
 
 model Cost {
-  id          String   @id @default(cuid())
-  type        CostType
-  description String?
-  value       Decimal  @db.Decimal(20, 6)
-  budgets     Budget[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  type                   CostType
+  description            String?
+  value                  Decimal   @db.Decimal(20, 6)
+  prorate                Boolean   @default(false)  // Should this cost be prorated across products?
+  perUnitOrTotal         CostScope @default(TOTAL)  // Is value per unit or total?
+  incotermToBeIncluded   Incoterm  @relation("CostIncotermLimit", fields: [incotermToBeIncludedId], references: [id])
+  incotermToBeIncludedId String    // Include this cost for all Incoterms up to and including this one
+  budgets                Budget[]
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
+enum CostScope {
+  PER_UNIT
+  TOTAL
 }
 
 enum CostType {
@@ -231,7 +245,8 @@ model Budget {
   clientId       String
   organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
-  incoterm       Incoterm
+  incoterm       Incoterm @relation(fields: [incotermId], references: [id])
+  incotermId     String 
   status         BudgetStatus  @default(DRAFT)
   totalAmount    Decimal?      @db.Decimal(20, 6)
   shareToken     String?       @unique // For public sharing
@@ -247,12 +262,16 @@ model Budget {
   updatedAt      DateTime      @updatedAt
 }
 
-enum Incoterm {
-  FOB
-  CIF
-  EXW
-  FCA
-  DDP
+model Incoterm {
+  id                   String     @id @default(cuid())
+  name                 String     @unique
+  previousIncoterm     Incoterm?  @relation("IncotermHierarchy", fields: [previousIncotermId], references: [id])
+  previousIncotermId   String?
+  nextIncoterms        Incoterm[] @relation("IncotermHierarchy")
+  budgets              Budget[]
+  costsIncludedUpTo    Cost[]     @relation("CostIncotermLimit")
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 }
 
 enum BudgetStatus {
@@ -281,6 +300,29 @@ model BudgetItem {
   totalLine     Decimal  @db.Decimal(20, 6)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// PRICING CONFIGURATION
+// ============================================
+
+model PricingConfiguration {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  adjustForVAT   Boolean      @default(false)
+  vatRate        Decimal?     @db.Decimal(8, 4)
+  baseCurrency   String       @default("USD")
+  roundingMode   RoundingMode @default(HALF_UP)
+  precision      Int          @default(2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+enum RoundingMode {
+  HALF_UP
+  DOWN
+  UP
 }
 
 // ============================================

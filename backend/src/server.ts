@@ -31,6 +31,7 @@ import packingListRoutes from './routes/packing-list.routes';
 import publicRoutes from './routes/public.routes';
 import userRoutes from './routes/user.routes';
 import bulkImportRoutes from './routes/bulk-import.routes';
+import pricingRoutes from './routes/pricing.routes';
 
 // Import middleware
 import { errorHandler } from './middlewares/error.middleware';
@@ -152,6 +153,7 @@ app.use('/api/price-history', priceHistoryRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/packing-lists', packingListRoutes);
 app.use('/api/bulk-import', bulkImportRoutes);
+app.use('/api/pricing', pricingRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
