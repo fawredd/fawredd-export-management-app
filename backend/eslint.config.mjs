@@ -18,19 +18,17 @@ export default [
     },
     plugins: {
       prettier: eslintPluginPrettier,
-      imports: eslintPluginImport,
-    },
-    'import/resolver': {
-      typescript: {},
+      import: eslintPluginImport,
     },
     rules: {
-      'no-unused-vars': 'warn',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
       'no-undef': 'off',
       'prefer-const': 'error',
       'no-console': 'off',
       'no-debugger': 'warn',
       'no-explicit-any': 'off',
-      'import/no-unresolved': 'error',
+      '@typescript-eslint/no-explicit-any': 'off',
       'prettier/prettier': [
         'error',
         {

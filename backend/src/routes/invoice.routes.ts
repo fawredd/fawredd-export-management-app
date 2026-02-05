@@ -13,17 +13,9 @@ const router = Router();
  */
 
 // All authenticated users can view invoices (filtered by role in service layer)
-router.get(
-  '/',
-  authenticate,
-  invoiceController.getAllInvoices.bind(invoiceController),
-);
+router.get('/', authenticate, invoiceController.getAllInvoices.bind(invoiceController));
 
-router.get(
-  '/:id',
-  authenticate,
-  invoiceController.getInvoiceById.bind(invoiceController),
-);
+router.get('/:id', authenticate, invoiceController.getInvoiceById.bind(invoiceController));
 
 // Admin, Trader, and Manufacturer can create/manage invoices
 router.post(

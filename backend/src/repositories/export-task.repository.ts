@@ -94,8 +94,8 @@ export class ExportTaskRepository {
         ...taskData,
         products: productIds
           ? {
-            connect: productIds.map((id) => ({ id })),
-          }
+              connect: productIds.map((id) => ({ id })),
+            }
           : undefined,
       },
       include: {
@@ -117,7 +117,7 @@ export class ExportTaskRepository {
       dueDate: Date | null;
       completedAt: Date | null;
       productIds: string[];
-    }>
+    }>,
   ) {
     const { productIds, ...updateData } = data;
 
@@ -127,8 +127,8 @@ export class ExportTaskRepository {
         ...updateData,
         products: productIds
           ? {
-            set: productIds.map((id) => ({ id })),
-          }
+              set: productIds.map((id) => ({ id })),
+            }
           : undefined,
       },
       include: {

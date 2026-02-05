@@ -13,17 +13,9 @@ const router = Router();
  */
 
 // All authenticated users can view export tasks
-router.get(
-  '/',
-  authenticate,
-  exportTaskController.getAllExportTasks.bind(exportTaskController),
-);
+router.get('/', authenticate, exportTaskController.getAllExportTasks.bind(exportTaskController));
 
-router.get(
-  '/:id',
-  authenticate,
-  exportTaskController.getExportTaskById.bind(exportTaskController),
-);
+router.get('/:id', authenticate, exportTaskController.getExportTaskById.bind(exportTaskController));
 
 // Admin, Trader, and Manufacturer can create/update tasks
 router.post(

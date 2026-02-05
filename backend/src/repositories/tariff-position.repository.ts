@@ -11,7 +11,7 @@ export class TariffPositionRepository {
    */
   async findAll(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
-    
+
     const [tariffPositions, total] = await Promise.all([
       prisma.tariffPosition.findMany({
         skip,

@@ -9,11 +9,7 @@ export class PackingListRepository {
   /**
    * Find all packing lists with pagination and filters
    */
-  async findAll(filters?: {
-    budgetId?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async findAll(filters?: { budgetId?: string; page?: number; limit?: number }) {
     const { budgetId, page = 1, limit = 20 } = filters || {};
     const skip = (page - 1) * limit;
 
@@ -83,11 +79,7 @@ export class PackingListRepository {
   /**
    * Create new packing list
    */
-  async create(data: {
-    budgetId: string;
-    details: any;
-    pdfUrl?: string;
-  }) {
+  async create(data: { budgetId: string; details: any; pdfUrl?: string }) {
     return prisma.packingList.create({
       data,
       include: {

@@ -13,26 +13,26 @@ const bulkImportController = new BulkImportController();
 
 // Configure multer for file upload
 const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
-    },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only CSV files are allowed'));
-        }
-    },
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  },
 });
 
 // Only ADMIN, MANUFACTURER, and TRADER can import
 router.post(
-    '/products',
-    authenticate,
-    authorize(Role.ADMIN, Role.MANUFACTURER, Role.TRADER),
-    upload.single('file'),
-    bulkImportController.importProducts.bind(bulkImportController)
+  '/products',
+  authenticate,
+  authorize(Role.ADMIN, Role.MANUFACTURER, Role.TRADER),
+  upload.single('file'),
+  bulkImportController.importProducts.bind(bulkImportController),
 );
 
 export default router;

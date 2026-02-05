@@ -9,7 +9,7 @@ import { DataTable } from "@/components/data-display/DataTable"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Eye, Edit, Users, Trash2 } from "lucide-react"
+import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,

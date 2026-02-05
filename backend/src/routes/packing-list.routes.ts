@@ -13,11 +13,7 @@ const router = Router();
  */
 
 // All authenticated users can view packing lists
-router.get(
-  '/',
-  authenticate,
-  packingListController.getAllPackingLists.bind(packingListController),
-);
+router.get('/', authenticate, packingListController.getAllPackingLists.bind(packingListController));
 
 router.get(
   '/:id',

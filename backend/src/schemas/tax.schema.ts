@@ -5,10 +5,12 @@ import { z } from 'zod';
  */
 export const createTaxSchema = z.object({
   productId: z.string().cuid('Invalid product ID format'),
-  name: z.string()
+  name: z
+    .string()
     .min(2, 'Tax name must be at least 2 characters')
     .max(100, 'Tax name must not exceed 100 characters'),
-  percentage: z.number()
+  percentage: z
+    .number()
     .min(0, 'Tax percentage cannot be negative')
     .max(100, 'Tax percentage cannot exceed 100%'),
 });

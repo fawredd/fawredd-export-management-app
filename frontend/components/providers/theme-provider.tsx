@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 export const THEMES = ['light', 'dark'];
 const ThemeContext = createContext<{ theme: string; setTheme: (theme: string) => void } | undefined>(undefined);
 
-export function ThemeProvider({ children, initialTheme }:{children: React.ReactNode, initialTheme: string}) {
+export function ThemeProvider({ children, initialTheme }: { children: ReactNode, initialTheme: string }) {
   // Initialize with a safe default, then update from localStorage on mount
   const [theme, setTheme] = useState(initialTheme);
   const [mounted, setMounted] = useState(false);
@@ -21,10 +21,10 @@ export function ThemeProvider({ children, initialTheme }:{children: React.ReactN
   // Apply theme to document root
   useEffect(() => {
     if (!mounted) return;
-    
+
     const root = document.documentElement;
     // Remove all theme classes first
-    root.classList.remove(...THEMES); 
+    root.classList.remove(...THEMES);
     // Add the current active theme class
     root.classList.add(theme);
     // Save to localStorage

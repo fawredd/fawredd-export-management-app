@@ -27,7 +27,7 @@ export class ProductController {
             productId: product.id,
             type: PriceType.COST,
             value: costPrice,
-          })
+          }),
         );
       }
       if (sellingPrice !== undefined && sellingPrice !== null) {
@@ -36,7 +36,7 @@ export class ProductController {
             productId: product.id,
             type: PriceType.SELLING,
             value: sellingPrice,
-          })
+          }),
         );
       }
 
@@ -94,14 +94,17 @@ export class ProductController {
               productId: product.id,
               type: PriceType.COST,
               value: costPrice,
-            })
+            }),
           );
         }
       }
 
       if (sellingPrice !== undefined && sellingPrice !== null) {
         // Get the latest selling price to check if it changed
-        const latestSelling = await priceHistoryRepository.getLatestPrice(product.id, PriceType.SELLING);
+        const latestSelling = await priceHistoryRepository.getLatestPrice(
+          product.id,
+          PriceType.SELLING,
+        );
 
         // Only create a new entry if the price changed
         if (!latestSelling || Number(latestSelling.value) !== sellingPrice) {
@@ -110,7 +113,7 @@ export class ProductController {
               productId: product.id,
               type: PriceType.SELLING,
               value: sellingPrice,
-            })
+            }),
           );
         }
       }
@@ -154,8 +157,8 @@ export class ProductController {
       // Generate URLs for uploaded files
       const protocol = req.protocol;
       const host = req.get('host');
-      const newImageUrls = files.map(file =>
-        `${protocol}://${host}/uploads/products/${file.filename}`
+      const newImageUrls = files.map(
+        (file) => `${protocol}://${host}/uploads/products/${file.filename}`,
       );
 
       // Update product with new image URLs
@@ -183,7 +186,7 @@ export class ProductController {
       }
 
       // Remove image URL from array
-      const updatedImageUrls = (product.imageUrls || []).filter(url => url !== imageUrl);
+      const updatedImageUrls = (product.imageUrls || []).filter((url) => url !== imageUrl);
 
       // Delete physical file
       const filename = imageUrl.split('/').pop();

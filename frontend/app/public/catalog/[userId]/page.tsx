@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 
+
 interface Product {
   id: string;
   sku: string;
@@ -40,11 +41,11 @@ export default function PublicCatalogPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         const response = await fetch(`${apiUrl}/api/public/catalog/${userId}`);
-        
+
         if (!response.ok) {
           throw new Error('Catalog not found');
         }
-        
+
         const catalogData = await response.json();
         setData(catalogData);
       } catch (err) {
@@ -106,9 +107,11 @@ export default function PublicCatalogPage() {
                   {/* Product Image */}
                   <div className="aspect-square bg-gray-100 relative">
                     {product.imageUrls && product.imageUrls.length > 0 ? (
-                      <img
+                      <Image
                         src={product.imageUrls[0]}
                         alt={product.title}
+                        width={400}
+                        height={400}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -124,7 +127,7 @@ export default function PublicCatalogPage() {
                   <div className="p-4">
                     <h3 className="font-semibold text-lg text-gray-900 mb-1">{product.title}</h3>
                     <p className="text-sm text-gray-500 mb-2">SKU: {product.sku}</p>
-                    
+
                     {product.description && (
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                     )}

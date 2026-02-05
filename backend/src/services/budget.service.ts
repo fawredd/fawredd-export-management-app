@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 export class BudgetService {
   async createBudget(data: {
     clientId: string;
-    incoterm: string;  // Now expects incoterm NAME (e.g., "FOB")
+    incoterm: string; // Now expects incoterm NAME (e.g., "FOB")
     items: Array<{
       productId: string;
       quantity: number;
@@ -74,7 +74,7 @@ export class BudgetService {
     const calculation = calculateBudget(
       itemsWithDetails,
       costsForCalculation,
-      data.incoterm as any,  // The calculator expects the string name
+      data.incoterm as any, // The calculator expects the string name
       0, // Default duty rate, can be customized per product
     );
 
@@ -93,7 +93,7 @@ export class BudgetService {
     // Create budget with calculation breakdowns
     const budget = await budgetRepository.create({
       clientId: data.clientId,
-      incotermId: incoterm.id,  // Use incotermId
+      incotermId: incoterm.id, // Use incotermId
       organizationId,
       totalAmount: toPrismaDecimal(calculation.totalAmount),
       budgetItems,

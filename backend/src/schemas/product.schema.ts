@@ -4,35 +4,37 @@ import { z } from 'zod';
  * Schema for creating a new product
  */
 export const createProductSchema = z.object({
-  sku: z.string()
+  sku: z
+    .string()
     .min(3, 'SKU must be at least 3 characters')
     .max(50, 'SKU must not exceed 50 characters')
     .regex(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
-  title: z.string()
+  title: z
+    .string()
     .min(3, 'Title must be at least 3 characters')
     .max(200, 'Title must not exceed 200 characters'),
-  description: z.string()
-    .max(2000, 'Description must not exceed 2000 characters')
-    .optional(),
-  weightKg: z.number()
+  description: z.string().max(2000, 'Description must not exceed 2000 characters').optional(),
+  weightKg: z
+    .number()
     .positive('Weight must be positive')
     .max(100000, 'Weight is too large')
     .optional(),
-  volumeM3: z.number()
+  volumeM3: z
+    .number()
     .positive('Volume must be positive')
     .max(10000, 'Volume is too large')
     .optional(),
-  composition: z.string()
-    .max(500, 'Composition must not exceed 500 characters')
-    .optional(),
+  composition: z.string().max(500, 'Composition must not exceed 500 characters').optional(),
   tariffPositionId: z.string().cuid('Invalid tariff position ID format').optional(),
   unitId: z.string().cuid('Invalid unit ID format').optional(),
   providerId: z.string().cuid('Invalid provider ID format').optional(),
-  costPrice: z.number()
+  costPrice: z
+    .number()
     .positive('Cost price must be positive')
     .max(999999999.99, 'Cost price is too large')
     .optional(),
-  sellingPrice: z.number()
+  sellingPrice: z
+    .number()
     .positive('Selling price must be positive')
     .max(999999999.99, 'Selling price is too large')
     .optional(),

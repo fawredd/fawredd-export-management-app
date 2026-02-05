@@ -9,11 +9,7 @@ export class PackingListService {
   /**
    * Get all packing lists with filters
    */
-  async getAllPackingLists(filters?: {
-    budgetId?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async getAllPackingLists(filters?: { budgetId?: string; page?: number; limit?: number }) {
     return packingListRepository.findAll(filters);
   }
 
@@ -67,7 +63,7 @@ export class PackingListService {
 
     // Import PDF generator service
     const { pdfGeneratorService } = await import('./pdf-generator.service');
-    
+
     // Generate PDF
     const pdfUrl = await pdfGeneratorService.generatePackingList(packingList);
 

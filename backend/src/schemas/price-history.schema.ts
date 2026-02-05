@@ -11,13 +11,11 @@ export const priceTypeSchema = z.enum(['COST', 'SELLING']);
 export const createPriceHistorySchema = z.object({
   productId: z.string().cuid('Invalid product ID format'),
   type: priceTypeSchema,
-  value: z.number()
+  value: z
+    .number()
     .positive('Price value must be positive')
     .max(999999999.99, 'Price value is too large'),
-  date: z.string()
-    .datetime('Invalid date format')
-    .or(z.date())
-    .optional(),
+  date: z.string().datetime('Invalid date format').or(z.date()).optional(),
 });
 
 /**

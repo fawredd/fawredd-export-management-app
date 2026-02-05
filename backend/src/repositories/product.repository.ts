@@ -2,7 +2,7 @@
  * Product repository - Database access layer for products
  */
 
-import { PrismaClient, Product } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

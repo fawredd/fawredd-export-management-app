@@ -147,7 +147,7 @@ export default function NewBudgetPage() {
 
   const createProductMutation = useMutation({
     mutationFn: (data: any) => apiClient.createProduct(data),
-    onSuccess: (newProduct) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] })
       setIsCreatingProduct(false)
       setNewProductData({ sku: "", title: "", description: "" })
@@ -228,7 +228,7 @@ export default function NewBudgetPage() {
 
       setPricingResults(result)
       setShowPricingDialog(true)
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation
     }
   }
@@ -668,60 +668,60 @@ export default function NewBudgetPage() {
             )}
           </Button>
           {/* Pricing Calculator Dialog */}
-      <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Pricing Calculation - {pricingResults?.incoterm}
-            </DialogTitle>
-            <DialogDescription>
-              Detailed cost breakdown for each product based on {pricingResults?.incoterm} Incoterm
-            </DialogDescription>
-          </DialogHeader>
-          
-          {pricingResults && (
-            <div className="space-y-4 py-4">
-              {/* Product Breakdowns */}
-              <div className="grid gap-4">
-                {pricingResults.products.map((result) => (
-                  <PricingBreakdown 
-                    key={result.productId} 
-                    result={result}
+          <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>
+            <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Pricing Calculation - {pricingResults?.incoterm}
+                </DialogTitle>
+                <DialogDescription>
+                  Detailed cost breakdown for each product based on {pricingResults?.incoterm} Incoterm
+                </DialogDescription>
+              </DialogHeader>
+
+              {pricingResults && (
+                <div className="space-y-4 py-4">
+                  {/* Product Breakdowns */}
+                  <div className="grid gap-4">
+                    {pricingResults.products.map((result) => (
+                      <PricingBreakdown
+                        key={result.productId}
+                        result={result}
+                        currency={pricingResults.metadata.currency}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Summary */}
+                  <PricingSummary
+                    results={pricingResults.products}
+                    incoterm={pricingResults.incoterm}
+                    metadata={pricingResults.metadata}
                     currency={pricingResults.metadata.currency}
                   />
-                ))}
-              </div>
+                </div>
+              )}
 
-              {/* Summary */}
-              <PricingSummary
-                results={pricingResults.products}
-                incoterm={pricingResults.incoterm}
-                metadata={pricingResults.metadata}
-                currency={pricingResults.metadata.currency}
-              />
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPricingDialog(false)}
-            >
-              Close
-            </Button>
-            <Button
-              type="button"
-              onClick={handleApplyPrices}
-              className="gap-2"
-            >
-              <Calculator className="h-4 w-4" />
-              Apply Prices to Budget
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPricingDialog(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleApplyPrices}
+                  className="gap-2"
+                >
+                  <Calculator className="h-4 w-4" />
+                  Apply Prices to Budget
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
         </div>
 

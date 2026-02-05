@@ -64,7 +64,7 @@ export const calculateBudget = (
 ): BudgetCalculationResult => {
   // 1. Calculate subtotal of products
   const subtotalProducts = items.reduce((sum, item) => {
-    return sum + (item.quantity * item.unitPrice);
+    return sum + item.quantity * item.unitPrice;
   }, 0);
 
   // 2. Calculate total expenses (all costs)
@@ -125,11 +125,12 @@ export const calculateBudget = (
     case 'CIF':
       totalAmount = totalCIF;
       break;
-    case 'DDP':
+    case 'DDP': {
       // DDP includes duties
       const totalDuties = calculatedItems.reduce((sum, item) => sum + item.duties, 0);
       totalAmount = totalCIF + totalDuties;
       break;
+    }
     default:
       totalAmount = totalFOB;
   }

@@ -8,7 +8,13 @@ export const incotermSchema = z.enum(['FOB', 'CIF']);
 /**
  * Budget status enum schema
  */
-export const budgetStatusSchema = z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'INVOICED']);
+export const budgetStatusSchema = z.enum([
+  'DRAFT',
+  'PENDING_APPROVAL',
+  'APPROVED',
+  'REJECTED',
+  'INVOICED',
+]);
 
 /**
  * Schema for budget item
@@ -31,8 +37,7 @@ export const createBudgetSchema = z.object({
   clientId: z.string().cuid('Invalid client ID format'),
   incoterm: incotermSchema,
   status: budgetStatusSchema.optional().default('DRAFT'),
-  budgetItems: z.array(budgetItemSchema)
-    .min(1, 'At least one budget item is required'),
+  budgetItems: z.array(budgetItemSchema).min(1, 'At least one budget item is required'),
   costIds: z.array(z.string().cuid('Invalid cost ID format')).optional(),
   totalAmount: z.number().positive('Total amount must be positive').optional(),
 });

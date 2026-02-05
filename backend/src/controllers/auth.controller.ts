@@ -2,7 +2,7 @@
  * Authentication controller
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { AuthService } from '../services/auth.service';
 
@@ -15,7 +15,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      path: '/'
+      path: '/',
     });
   }
 
@@ -46,7 +46,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        path: '/'
+        path: '/',
       });
       res.json({ message: 'Logged out successfully' });
     } catch (error) {

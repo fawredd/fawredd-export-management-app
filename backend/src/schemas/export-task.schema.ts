@@ -9,17 +9,16 @@ export const taskStatusSchema = z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', '
  * Schema for creating a new export task
  */
 export const createExportTaskSchema = z.object({
-  description: z.string()
+  description: z
+    .string()
     .min(5, 'Description must be at least 5 characters')
     .max(1000, 'Description must not exceed 1000 characters'),
   countryId: z.string().cuid('Invalid country ID format'),
-  productIds: z.array(z.string().cuid('Invalid product ID format'))
+  productIds: z
+    .array(z.string().cuid('Invalid product ID format'))
     .min(1, 'At least one product must be selected')
     .optional(),
-  dueDate: z.string()
-    .datetime('Invalid date format')
-    .or(z.date())
-    .optional(),
+  dueDate: z.string().datetime('Invalid date format').or(z.date()).optional(),
   status: taskStatusSchema.optional().default('PENDING'),
 });
 
@@ -33,10 +32,7 @@ export const updateExportTaskSchema = createExportTaskSchema.partial();
  */
 export const updateTaskStatusSchema = z.object({
   status: taskStatusSchema,
-  completedAt: z.string()
-    .datetime('Invalid date format')
-    .or(z.date())
-    .optional(),
+  completedAt: z.string().datetime('Invalid date format').or(z.date()).optional(),
 });
 
 /**

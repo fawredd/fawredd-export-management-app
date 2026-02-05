@@ -58,14 +58,14 @@ export class BudgetController {
     try {
       const { id } = req.params;
       const { expiresInDays } = req.body;
-      
+
       const budget = await budgetService.generateShareToken(id, expiresInDays || 30);
-      
+
       // Generate full share URL
       const protocol = req.protocol;
       const host = req.get('host');
       const shareUrl = `${protocol}://${host}/public/budget/${budget.shareToken}`;
-      
+
       res.json({
         message: 'Share link generated successfully',
         budget,

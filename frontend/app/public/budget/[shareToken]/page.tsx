@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
 
 interface BudgetItem {
   id: string;
@@ -38,15 +39,14 @@ interface Budget {
 
 export default function PublicBudgetPage() {
   const params = useParams();
-  const router = useRouter();
   const shareToken = params.shareToken as string;
-  
+
   const [budget, setBudget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [showAcceptForm, setShowAcceptForm] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     prospectName: '',
     prospectEmail: '',
@@ -60,14 +60,14 @@ export default function PublicBudgetPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         const response = await fetch(`${apiUrl}/api/public/budget/${shareToken}`);
-        
+
         if (!response.ok) {
           if (response.status === 410) {
             throw new Error('This budget link has expired');
           }
           throw new Error('Budget not found');
         }
-        
+
         const budgetData = await response.json();
         setBudget(budgetData);
       } catch (err) {
@@ -99,7 +99,7 @@ export default function PublicBudgetPage() {
         throw new Error(errorData.message || 'Failed to accept budget');
       }
 
-      const result = await response.json();
+      const _result = await response.json();
       alert('Budget accepted successfully! The manufacturer has been notified.');
       setShowAcceptForm(false);
       // Refresh budget data
@@ -147,9 +147,8 @@ export default function PublicBudgetPage() {
               <p className="text-gray-600 mt-1">For: {budget.client.name}</p>
             </div>
             <div className="text-right">
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                isAccepted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-              }`}>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${isAccepted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                }`}>
                 {budget.status}
               </span>
               <p className="text-sm text-gray-500 mt-2">Views: {budget.viewCount}</p>
@@ -177,9 +176,11 @@ export default function PublicBudgetPage() {
             {budget.budgetItems.map((item) => (
               <div key={item.id} className="flex gap-4 border-b pb-4 last:border-b-0">
                 {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
-                  <img
+                  <Image
                     src={item.product.imageUrls[0]}
                     alt={item.product.title}
+                    width={80}
+                    height={80}
                     className="w-20 h-20 object-cover rounded"
                   />
                 ) : (

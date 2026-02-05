@@ -1,5 +1,8 @@
 import tariffPositionRepository from '../repositories/tariff-position.repository';
-import { CreateTariffPositionInput, UpdateTariffPositionInput } from '../schemas/tariff-position.schema';
+import {
+  CreateTariffPositionInput,
+  UpdateTariffPositionInput,
+} from '../schemas/tariff-position.schema';
 
 /**
  * Service for TariffPosition business logic

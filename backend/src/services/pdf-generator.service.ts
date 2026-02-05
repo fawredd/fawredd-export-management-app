@@ -36,7 +36,7 @@ export class PdfGeneratorService {
         doc.text(`Invoice Number: ${invoiceData.invoiceNumber}`, 50, 100);
         doc.text(`Date: ${new Date(invoiceData.issueDate).toLocaleDateString()}`, 50, 115);
         doc.text(`Status: ${invoiceData.status}`, 50, 130);
-        
+
         // Client Info
         doc.text('Bill To:', 50, 160);
         doc.fontSize(12).text(invoiceData.budget?.client?.name || 'N/A', 50, 175);
@@ -61,7 +61,7 @@ export class PdfGeneratorService {
         doc.text('Qty', 300, yPosition);
         doc.text('Unit Price', 370, yPosition);
         doc.text('Total', 480, yPosition);
-        
+
         yPosition += 20;
         doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
         yPosition += 10;
@@ -93,12 +93,10 @@ export class PdfGeneratorService {
 
         // Footer
         doc.fontSize(8).font('Helvetica');
-        doc.text(
-          'This is a proforma invoice and does not constitute a tax invoice.',
-          50,
-          750,
-          { align: 'center', width: 500 }
-        );
+        doc.text('This is a proforma invoice and does not constitute a tax invoice.', 50, 750, {
+          align: 'center',
+          width: 500,
+        });
 
         doc.end();
 
@@ -134,7 +132,7 @@ export class PdfGeneratorService {
         doc.fontSize(10);
         doc.text(`Packing List Number: ${packingListData.listNumber}`, 50, 100);
         doc.text(`Date: ${new Date(packingListData.issueDate).toLocaleDateString()}`, 50, 115);
-        
+
         // Client Info
         doc.text('Ship To:', 50, 145);
         doc.fontSize(12).text(packingListData.budget?.client?.name || 'N/A', 50, 160);
@@ -157,7 +155,7 @@ export class PdfGeneratorService {
         doc.text('SKU', 250, yPosition);
         doc.text('Qty', 350, yPosition);
         doc.text('Weight (kg)', 420, yPosition);
-        
+
         yPosition += 20;
         doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
         yPosition += 10;
@@ -171,7 +169,7 @@ export class PdfGeneratorService {
               yPosition = 50;
             }
 
-            const productWeight = item.product?.weightKg 
+            const productWeight = item.product?.weightKg
               ? (item.product.weightKg * item.quantity).toFixed(2)
               : 'N/A';
 
@@ -197,12 +195,7 @@ export class PdfGeneratorService {
 
         // Footer
         doc.fontSize(8).font('Helvetica');
-        doc.text(
-          'Please verify all items upon receipt.',
-          50,
-          750,
-          { align: 'center', width: 500 }
-        );
+        doc.text('Please verify all items upon receipt.', 50, 750, { align: 'center', width: 500 });
 
         doc.end();
 

@@ -50,9 +50,7 @@ export class CountryService {
     await this.getCountryById(id);
 
     // Normalize code if provided
-    const normalizedData = data.code
-      ? { ...data, code: data.code.toUpperCase() }
-      : data;
+    const normalizedData = data.code ? { ...data, code: data.code.toUpperCase() } : data;
 
     // If updating code, check if new code already exists
     if (normalizedData.code) {

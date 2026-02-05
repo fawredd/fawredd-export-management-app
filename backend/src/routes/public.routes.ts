@@ -125,78 +125,82 @@ router.get('/budget/:shareToken', async (req: Request, res: Response, next: Next
 });
 
 // POST /api/public/budget/:shareToken/accept - Accept a budget (prospect becomes client)
-router.post('/budget/:shareToken/accept', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { shareToken } = req.params;
-    const { prospectName, prospectEmail, prospectPhone, prospectAddress, prospectTaxId } = req.body;
+router.post(
+  '/budget/:shareToken/accept',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { shareToken } = req.params;
+      const { prospectName, prospectEmail, prospectPhone, prospectAddress, prospectTaxId } =
+        req.body;
 
-    if (!prospectName || !prospectEmail) {
-      throw new AppError(400, 'Prospect name and email are required');
-    }
+      if (!prospectName || !prospectEmail) {
+        throw new AppError(400, 'Prospect name and email are required');
+      }
 
-    const budget = await prisma.budget.findUnique({
-      where: { shareToken },
-      include: { client: true },
-    });
-
-    if (!budget) {
-      throw new AppError(404, 'Budget not found');
-    }
-
-    if (budget.expiresAt && new Date(budget.expiresAt) < new Date()) {
-      throw new AppError(410, 'This budget link has expired');
-    }
-
-    if (budget.status === 'APPROVED') {
-      throw new AppError(400, 'This budget has already been accepted');
-    }
-
-    // Check if client already exists with this email
-    let client = await prisma.client.findFirst({
-      where: { email: prospectEmail },
-    });
-
-    // If client doesn't exist, create new one
-    if (!client) {
-      client = await prisma.client.create({
-        data: {
-          name: prospectName,
-          email: prospectEmail,
-          phone: prospectPhone,
-          address: prospectAddress,
-          taxId: prospectTaxId,
-          convertedFrom: shareToken, // Track conversion source
-        },
+      const budget = await prisma.budget.findUnique({
+        where: { shareToken },
+        include: { client: true },
       });
-    }
 
-    // Update budget
-    const updatedBudget = await prisma.budget.update({
-      where: { id: budget.id },
-      data: {
-        status: 'APPROVED',
-        acceptedAt: new Date(),
-        acceptedBy: prospectEmail,
-        clientId: client.id, // Link to the client
-      },
-      include: {
-        client: true,
-        budgetItems: {
-          include: {
-            product: true,
+      if (!budget) {
+        throw new AppError(404, 'Budget not found');
+      }
+
+      if (budget.expiresAt && new Date(budget.expiresAt) < new Date()) {
+        throw new AppError(410, 'This budget link has expired');
+      }
+
+      if (budget.status === 'APPROVED') {
+        throw new AppError(400, 'This budget has already been accepted');
+      }
+
+      // Check if client already exists with this email
+      let client = await prisma.client.findFirst({
+        where: { email: prospectEmail },
+      });
+
+      // If client doesn't exist, create new one
+      if (!client) {
+        client = await prisma.client.create({
+          data: {
+            name: prospectName,
+            email: prospectEmail,
+            phone: prospectPhone,
+            address: prospectAddress,
+            taxId: prospectTaxId,
+            convertedFrom: shareToken, // Track conversion source
+          },
+        });
+      }
+
+      // Update budget
+      const updatedBudget = await prisma.budget.update({
+        where: { id: budget.id },
+        data: {
+          status: 'APPROVED',
+          acceptedAt: new Date(),
+          acceptedBy: prospectEmail,
+          clientId: client.id, // Link to the client
+        },
+        include: {
+          client: true,
+          budgetItems: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    res.json({
-      message: 'Budget accepted successfully',
-      budget: updatedBudget,
-      client,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+      res.json({
+        message: 'Budget accepted successfully',
+        budget: updatedBudget,
+        client,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

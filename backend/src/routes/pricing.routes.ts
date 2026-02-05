@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import {
-    calculatePricing,
-    calculatePricingBatch,
-    getPricingConfig,
-    updatePricingConfig,
-    getIncoterms,
+  calculatePricing,
+  calculatePricingBatch,
+  getPricingConfig,
+  updatePricingConfig,
+  getIncoterms,
 } from '../controllers/pricing-calculator.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 

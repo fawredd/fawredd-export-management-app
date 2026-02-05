@@ -3,7 +3,7 @@
  * Sets up Express server with middleware, routes, and error handling
  */
 
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';

@@ -20,7 +20,7 @@ export class PriceHistoryController {
     try {
       const { productId } = productIdParamSchema.parse(req.params);
       const type = req.query.type ? priceTypeSchema.parse(req.query.type) : undefined;
-      
+
       const priceHistory = await priceHistoryService.getPriceHistoryByProductId(productId, type);
 
       res.json({

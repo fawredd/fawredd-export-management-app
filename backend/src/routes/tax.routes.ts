@@ -13,11 +13,7 @@ const router = Router();
  */
 
 // All authenticated users can view taxes
-router.get(
-  '/',
-  authenticate,
-  taxController.getAllTaxes.bind(taxController),
-);
+router.get('/', authenticate, taxController.getAllTaxes.bind(taxController));
 
 router.get(
   '/product/:productId',
@@ -25,11 +21,7 @@ router.get(
   taxController.getTaxesByProductId.bind(taxController),
 );
 
-router.get(
-  '/:id',
-  authenticate,
-  taxController.getTaxById.bind(taxController),
-);
+router.get('/:id', authenticate, taxController.getTaxById.bind(taxController));
 
 // Admin and Manufacturer can manage taxes
 router.post(

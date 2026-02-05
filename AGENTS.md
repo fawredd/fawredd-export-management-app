@@ -8,6 +8,7 @@ This document gives AI agents a small, actionable context for working on the `fa
 ## 1) Quick summary
 
 - Project: Export Management app (manufacturers, traders, logistics).
+- Arquitecture: This is a dockerizer monorepo with ./fronted and ./backend folders. Both folder can me run independently with their own docker-compose.yml files or with "npm run dev" command inside folder.
 - Stack: **Next.js v15 (App Router)** + **React v19** (frontend), **Express v5** + **TypeScript** (backend), **Prisma v6** + PostgreSQL (DB).
 - Main features: Products, Budgets, Invoices, Packing Lists, Providers, Clients, Tariff Positions, Costs, Export Tasks.
 

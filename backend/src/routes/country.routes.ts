@@ -13,17 +13,9 @@ const router = Router();
  */
 
 // Public routes (authenticated users)
-router.get(
-  '/',
-  authenticate,
-  countryController.getAllCountries.bind(countryController),
-);
+router.get('/', authenticate, countryController.getAllCountries.bind(countryController));
 
-router.get(
-  '/:id',
-  authenticate,
-  countryController.getCountryById.bind(countryController),
-);
+router.get('/:id', authenticate, countryController.getCountryById.bind(countryController));
 
 // Admin only routes
 router.post(

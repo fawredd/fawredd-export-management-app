@@ -9,11 +9,7 @@ export class InvoiceService {
   /**
    * Get all invoices with filters
    */
-  async getAllInvoices(filters?: {
-    budgetId?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async getAllInvoices(filters?: { budgetId?: string; page?: number; limit?: number }) {
     return invoiceRepository.findAll(filters);
   }
 
@@ -57,7 +53,7 @@ export class InvoiceService {
 
     // Create invoice and update budget status
     const invoice = await invoiceRepository.create(invoiceData);
-    
+
     // Update budget status to INVOICED
     await budgetRepository.update(data.budgetId, { status: 'INVOICED' });
 
@@ -103,7 +99,7 @@ export class InvoiceService {
 
     // Import PDF generator service
     const { pdfGeneratorService } = await import('./pdf-generator.service');
-    
+
     // Generate PDF
     const pdfUrl = await pdfGeneratorService.generateInvoice(invoice);
 

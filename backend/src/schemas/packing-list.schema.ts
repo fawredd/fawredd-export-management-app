@@ -4,15 +4,19 @@ import { z } from 'zod';
  * Schema for packing list details (flexible JSON structure)
  */
 export const packingListDetailsSchema = z.object({
-  items: z.array(z.object({
-    productId: z.string().cuid('Invalid product ID'),
-    productName: z.string(),
-    quantity: z.number().int().positive(),
-    weight: z.number().positive().optional(),
-    volume: z.number().positive().optional(),
-    packageType: z.string().optional(),
-    packageCount: z.number().int().positive().optional(),
-  })).min(1, 'At least one item is required'),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().cuid('Invalid product ID'),
+        productName: z.string(),
+        quantity: z.number().int().positive(),
+        weight: z.number().positive().optional(),
+        volume: z.number().positive().optional(),
+        packageType: z.string().optional(),
+        packageCount: z.number().int().positive().optional(),
+      }),
+    )
+    .min(1, 'At least one item is required'),
   totalWeight: z.number().positive().optional(),
   totalVolume: z.number().positive().optional(),
   totalPackages: z.number().int().positive().optional(),

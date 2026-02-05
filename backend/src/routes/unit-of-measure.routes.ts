@@ -13,17 +13,9 @@ const router = Router();
  */
 
 // Public routes (authenticated users)
-router.get(
-  '/',
-  authenticate,
-  unitOfMeasureController.getAllUnits.bind(unitOfMeasureController),
-);
+router.get('/', authenticate, unitOfMeasureController.getAllUnits.bind(unitOfMeasureController));
 
-router.get(
-  '/:id',
-  authenticate,
-  unitOfMeasureController.getUnitById.bind(unitOfMeasureController),
-);
+router.get('/:id', authenticate, unitOfMeasureController.getUnitById.bind(unitOfMeasureController));
 
 // Admin only routes
 router.post(
