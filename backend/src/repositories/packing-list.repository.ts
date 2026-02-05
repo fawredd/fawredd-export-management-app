@@ -9,12 +9,18 @@ export class PackingListRepository {
   /**
    * Find all packing lists with pagination and filters
    */
-  async findAll(filters?: { budgetId?: string; page?: number; limit?: number }) {
-    const { budgetId, page = 1, limit = 20 } = filters || {};
+  async findAll(filters?: {
+    budgetId?: string;
+    page?: number;
+    limit?: number;
+    organizationId?: string | null;
+  }) {
+    const { budgetId, page = 1, limit = 20, organizationId } = filters || {};
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (budgetId) where.budgetId = budgetId;
+    if (organizationId) where.organizationId = organizationId;
 
     const [packingLists, total] = await Promise.all([
       prisma.packingList.findMany({
@@ -53,9 +59,12 @@ export class PackingListRepository {
   /**
    * Find packing list by ID
    */
-  async findById(id: string) {
-    return prisma.packingList.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.packingList.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         budget: {
           include: {
@@ -79,7 +88,12 @@ export class PackingListRepository {
   /**
    * Create new packing list
    */
-  async create(data: { budgetId: string; details: any; pdfUrl?: string }) {
+  async create(data: {
+    budgetId: string;
+    details: any;
+    organizationId?: string | null;
+    pdfUrl?: string;
+  }) {
     return prisma.packingList.create({
       data,
       include: {
@@ -101,7 +115,12 @@ export class PackingListRepository {
       details: any;
       pdfUrl: string | null;
     }>,
+    organizationId?: string | null,
   ) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.packingList.update({
       where: { id },
       data,
@@ -128,7 +147,11 @@ export class PackingListRepository {
   /**
    * Delete packing list
    */
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.packingList.delete({
       where: { id },
     });

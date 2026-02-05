@@ -9,15 +9,20 @@ export class PackingListService {
   /**
    * Get all packing lists with filters
    */
-  async getAllPackingLists(filters?: { budgetId?: string; page?: number; limit?: number }) {
+  async getAllPackingLists(filters?: {
+    budgetId?: string;
+    page?: number;
+    limit?: number;
+    organizationId?: string | null;
+  }) {
     return packingListRepository.findAll(filters);
   }
 
   /**
    * Get packing list by ID
    */
-  async getPackingListById(id: string) {
-    const packingList = await packingListRepository.findById(id);
+  async getPackingListById(id: string, organizationId?: string | null) {
+    const packingList = await packingListRepository.findById(id, organizationId);
     if (!packingList) {
       throw new Error('Packing list not found');
     }
@@ -27,9 +32,9 @@ export class PackingListService {
   /**
    * Create new packing list from budget
    */
-  async createPackingList(data: CreatePackingListInput) {
+  async createPackingList(data: CreatePackingListInput & { organizationId?: string | null }) {
     // Verify budget exists and is approved
-    const budget = await budgetRepository.findById(data.budgetId);
+    const budget = await budgetRepository.findById(data.budgetId, data.organizationId);
     if (!budget) {
       throw new Error('Budget not found');
     }
@@ -44,9 +49,13 @@ export class PackingListService {
   /**
    * Update packing list
    */
-  async updatePackingList(id: string, data: UpdatePackingListInput) {
+  async updatePackingList(
+    id: string,
+    data: UpdatePackingListInput,
+    organizationId?: string | null,
+  ) {
     // Check if packing list exists
-    await this.getPackingListById(id);
+    await this.getPackingListById(id, organizationId);
 
     return packingListRepository.update(id, data);
   }
@@ -76,9 +85,9 @@ export class PackingListService {
   /**
    * Delete packing list
    */
-  async deletePackingList(id: string) {
+  async deletePackingList(id: string, organizationId?: string | null) {
     // Check if packing list exists
-    await this.getPackingListById(id);
+    await this.getPackingListById(id, organizationId);
 
     return packingListRepository.delete(id);
   }
@@ -99,8 +108,8 @@ export class PackingListService {
   /**
    * Auto-generate packing list details from budget
    */
-  async autoGenerateFromBudget(budgetId: string) {
-    const budget = await budgetRepository.findById(budgetId);
+  async autoGenerateFromBudget(budgetId: string, organizationId?: string | null) {
+    const budget = await budgetRepository.findById(budgetId, organizationId);
     if (!budget) {
       throw new Error('Budget not found');
     }

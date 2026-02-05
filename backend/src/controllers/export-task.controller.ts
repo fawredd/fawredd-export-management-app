@@ -1,5 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import exportTaskService from '../services/export-task.service';
+import { AuthRequest } from '../middlewares/auth.middleware';
+import { AppError } from '../middlewares/error.middleware';
 import {
   createExportTaskSchema,
   updateExportTaskSchema,
@@ -29,6 +31,7 @@ export class ExportTaskController {
         status,
         page,
         limit,
+        organizationId: req.user?.organizationId,
       });
 
       res.json({
@@ -49,7 +52,7 @@ export class ExportTaskController {
   async getExportTaskById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
-      const exportTask = await exportTaskService.getExportTaskById(id);
+      const exportTask = await exportTaskService.getExportTaskById(id, req.user?.organizationId);
 
       res.json({
         success: true,
@@ -65,15 +68,14 @@ export class ExportTaskController {
    * @summary Create new export task
    * @returns {ExportTask} 201 - Created export task
    */
-  async createExportTask(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = createExportTaskSchema.parse(req.body);
-      const exportTask = await exportTaskService.createExportTask(data);
-
-      res.status(201).json({
-        success: true,
-        data: exportTask,
+      const task = await exportTaskService.createExportTask({
+        ...data,
+        organizationId: req.user?.organizationId,
       });
+      res.status(201).json(task);
     } catch (error) {
       next(error);
     }
@@ -84,16 +86,15 @@ export class ExportTaskController {
    * @summary Update export task
    * @returns {ExportTask} 200 - Updated export task
    */
-  async updateExportTask(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
       const data = updateExportTaskSchema.parse(req.body);
-      const exportTask = await exportTaskService.updateExportTask(id, data);
-
-      res.json({
-        success: true,
-        data: exportTask,
-      });
+      const task = await exportTaskService.updateExportTask(id, data, req.user?.organizationId);
+      if (!task) {
+        throw new AppError(404, 'Export task not found');
+      }
+      res.json(task);
     } catch (error) {
       next(error);
     }
@@ -104,16 +105,15 @@ export class ExportTaskController {
    * @summary Update export task status
    * @returns {ExportTask} 200 - Updated export task
    */
-  async updateTaskStatus(req: Request, res: Response, next: NextFunction) {
+  async updateStatus(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
       const data = updateTaskStatusSchema.parse(req.body);
-      const exportTask = await exportTaskService.updateTaskStatus(id, data);
-
-      res.json({
-        success: true,
-        data: exportTask,
-      });
+      const task = await exportTaskService.updateTaskStatus(id, data, req.user?.organizationId);
+      if (!task) {
+        throw new AppError(404, 'Export task not found');
+      }
+      res.json(task);
     } catch (error) {
       next(error);
     }
@@ -124,10 +124,10 @@ export class ExportTaskController {
    * @summary Delete export task
    * @returns {Object} 200 - Success message
    */
-  async deleteExportTask(req: Request, res: Response, next: NextFunction) {
+  async deleteExportTask(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = exportTaskIdSchema.parse(req.params);
-      await exportTaskService.deleteExportTask(id);
+      await exportTaskService.deleteExportTask(id, req.user?.organizationId);
 
       res.json({
         success: true,

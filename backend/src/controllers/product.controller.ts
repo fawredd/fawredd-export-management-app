@@ -15,9 +15,10 @@ export class ProductController {
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { costPrice, sellingPrice, ...productData } = req.body;
+      const organizationId = req.user?.organizationId || null;
 
       // Create the product first
-      const product = await productRepository.create(productData);
+      const product = await productRepository.create({ ...productData, organizationId });
 
       // Create price history entries if prices are provided
       const priceHistoryPromises = [];
@@ -44,7 +45,7 @@ export class ProductController {
       await Promise.all(priceHistoryPromises);
 
       // Fetch the product again with price history included
-      const productWithPrices = await productRepository.findById(product.id);
+      const productWithPrices = await productRepository.findById(product.id, organizationId);
 
       res.status(201).json(productWithPrices);
     } catch (error) {
@@ -54,7 +55,7 @@ export class ProductController {
 
   async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const products = await productRepository.findAll();
+      const products = await productRepository.findAll(req.user?.organizationId);
       res.json(products);
     } catch (error) {
       next(error);
@@ -63,7 +64,7 @@ export class ProductController {
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const product = await productRepository.findById(req.params.id);
+      const product = await productRepository.findById(req.params.id, req.user?.organizationId);
       if (!product) {
         throw new AppError(404, 'Product not found');
       }
@@ -76,9 +77,10 @@ export class ProductController {
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { costPrice, sellingPrice, ...productData } = req.body;
+      const organizationId = req.user?.organizationId || null;
 
       // Update the product first
-      const product = await productRepository.update(req.params.id, productData);
+      const product = await productRepository.update(req.params.id, productData, organizationId);
 
       // Create price history entries if prices are provided
       const priceHistoryPromises = [];
@@ -122,7 +124,7 @@ export class ProductController {
       await Promise.all(priceHistoryPromises);
 
       // Fetch the product again with price history included
-      const productWithPrices = await productRepository.findById(product.id);
+      const productWithPrices = await productRepository.findById(product.id, organizationId);
 
       res.json(productWithPrices);
     } catch (error) {
@@ -132,7 +134,7 @@ export class ProductController {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      await productRepository.delete(req.params.id);
+      await productRepository.delete(req.params.id, req.user?.organizationId);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -149,7 +151,7 @@ export class ProductController {
       }
 
       // Get existing product
-      const product = await productRepository.findById(productId);
+      const product = await productRepository.findById(productId, req.user?.organizationId);
       if (!product) {
         throw new AppError(404, 'Product not found');
       }
@@ -162,9 +164,13 @@ export class ProductController {
       );
 
       // Update product with new image URLs
-      const updatedProduct = await productRepository.update(productId, {
-        imageUrls: [...(product.imageUrls || []), ...newImageUrls],
-      });
+      const updatedProduct = await productRepository.update(
+        productId,
+        {
+          imageUrls: [...(product.imageUrls || []), ...newImageUrls],
+        },
+        req.user?.organizationId,
+      );
 
       res.json({
         message: 'Images uploaded successfully',
@@ -180,7 +186,7 @@ export class ProductController {
     try {
       const { id: productId, imageUrl } = req.params;
 
-      const product = await productRepository.findById(productId);
+      const product = await productRepository.findById(productId, req.user?.organizationId);
       if (!product) {
         throw new AppError(404, 'Product not found');
       }
@@ -196,9 +202,13 @@ export class ProductController {
       }
 
       // Update product
-      const updatedProduct = await productRepository.update(productId, {
-        imageUrls: updatedImageUrls,
-      });
+      const updatedProduct = await productRepository.update(
+        productId,
+        {
+          imageUrls: updatedImageUrls,
+        },
+        req.user?.organizationId,
+      );
 
       res.json({
         message: 'Image deleted successfully',

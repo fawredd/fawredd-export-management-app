@@ -79,6 +79,17 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
+// Auth-specific rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // Only 10 requests per 15 minutes for auth endpoints
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/auth/', authLimiter);
+
 // Swagger/OpenAPI setup
 const swaggerOptions = {
   definition: {

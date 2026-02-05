@@ -13,7 +13,10 @@ export class ProviderController {
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const provider = await prisma.provider.create({
-        data: req.body,
+        data: {
+          ...req.body,
+          organizationId: (req as any).user?.organizationId,
+        },
       });
       res.status(201).json(provider);
     } catch (error) {
@@ -24,6 +27,9 @@ export class ProviderController {
   async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const providers = await prisma.provider.findMany({
+        where: {
+          organizationId: (req as any).user?.organizationId,
+        },
         include: {
           products: true,
         },
@@ -36,8 +42,11 @@ export class ProviderController {
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const provider = await prisma.provider.findUnique({
-        where: { id: req.params.id },
+      const provider = await prisma.provider.findFirst({
+        where: {
+          id: req.params.id,
+          organizationId: (req as any).user?.organizationId,
+        },
         include: {
           products: true,
         },
@@ -53,8 +62,12 @@ export class ProviderController {
 
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = (req as any).user?.organizationId;
       const provider = await prisma.provider.update({
-        where: { id: req.params.id },
+        where: {
+          id: req.params.id,
+          organizationId: organizationId,
+        },
         data: req.body,
       });
       res.json(provider);
@@ -65,8 +78,12 @@ export class ProviderController {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = (req as any).user?.organizationId;
       await prisma.provider.delete({
-        where: { id: req.params.id },
+        where: {
+          id: req.params.id,
+          organizationId: organizationId,
+        },
       });
       res.status(204).send();
     } catch (error) {

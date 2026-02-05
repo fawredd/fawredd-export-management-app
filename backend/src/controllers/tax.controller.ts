@@ -18,7 +18,7 @@ export class TaxController {
    */
   async getAllTaxes(req: Request, res: Response, next: NextFunction) {
     try {
-      const taxes = await taxService.getAllTaxes();
+      const taxes = await taxService.getAllTaxes((req as any).user?.organizationId);
 
       res.json({
         success: true,
@@ -37,7 +37,10 @@ export class TaxController {
   async getTaxesByProductId(req: Request, res: Response, next: NextFunction) {
     try {
       const { productId } = productIdParamSchema.parse(req.params);
-      const taxes = await taxService.getTaxesByProductId(productId);
+      const taxes = await taxService.getTaxesByProductId(
+        productId,
+        (req as any).user?.organizationId,
+      );
 
       res.json({
         success: true,
@@ -56,7 +59,7 @@ export class TaxController {
   async getTaxById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = taxIdSchema.parse(req.params);
-      const tax = await taxService.getTaxById(id);
+      const tax = await taxService.getTaxById(id, (req as any).user?.organizationId);
 
       res.json({
         success: true,
@@ -75,7 +78,10 @@ export class TaxController {
   async createTax(req: Request, res: Response, next: NextFunction) {
     try {
       const data = createTaxSchema.parse(req.body);
-      const tax = await taxService.createTax(data);
+      const tax = await taxService.createTax({
+        ...data,
+        organizationId: (req as any).user?.organizationId,
+      });
 
       res.status(201).json({
         success: true,
@@ -95,7 +101,7 @@ export class TaxController {
     try {
       const { id } = taxIdSchema.parse(req.params);
       const data = updateTaxSchema.parse(req.body);
-      const tax = await taxService.updateTax(id, data);
+      const tax = await taxService.updateTax(id, data, (req as any).user?.organizationId);
 
       res.json({
         success: true,
@@ -114,7 +120,7 @@ export class TaxController {
   async deleteTax(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = taxIdSchema.parse(req.params);
-      await taxService.deleteTax(id);
+      await taxService.deleteTax(id, (req as any).user?.organizationId);
 
       res.json({
         success: true,

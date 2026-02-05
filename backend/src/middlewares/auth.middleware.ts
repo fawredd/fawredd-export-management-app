@@ -12,6 +12,7 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: Role;
+    organizationId?: string | null;
   };
   cookies: { [key: string]: string };
 }
@@ -41,6 +42,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
       id: string;
       email: string;
       role: Role;
+      organizationId?: string | null;
     };
 
     req.user = decoded;

@@ -18,7 +18,8 @@ export class UserController {
       // For now, we'll just return all users if admin, or self if not
       // TODO: Implement organization filtering once middleware is updated
 
-      const users = await userRepository.findAll();
+      const organizationId = req.user?.role === Role.ADMIN ? undefined : req.user?.organizationId;
+      const users = await userRepository.findAll(organizationId);
 
       // Filter based on role/org logic if needed here, but repository should handle it ideally
       // For now, let's return all for Admin
@@ -29,10 +30,11 @@ export class UserController {
     }
   }
 
-  async getUser(req: AuthRequest, res: Response, next: NextFunction) {
+  async getUserById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = await userRepository.findById(id);
+      const organizationId = req.user?.role === Role.ADMIN ? undefined : req.user?.organizationId;
+      const user = await userRepository.findById(id, organizationId);
 
       if (!user) {
         throw new AppError(404, 'User not found');
@@ -78,10 +80,7 @@ export class UserController {
         organizationId: finalOrganizationId,
       });
 
-      // Remove password from response
-      const { password: _password, ...userWithoutPassword } = user;
-
-      res.status(201).json(userWithoutPassword);
+      res.status(201).json(user);
     } catch (error) {
       next(error);
     }
@@ -92,20 +91,17 @@ export class UserController {
       const { id } = req.params;
       const { name, email, role, password } = req.body;
 
-      const user = await userRepository.findById(id);
-      if (!user) {
-        throw new AppError(404, 'User not found');
-      }
-
       const data: any = { name, email, role };
       if (password) {
         data.password = await hashPassword(password);
       }
 
-      const updatedUser = await userRepository.update(id, data);
-      const { password: _password, ...userWithoutPassword } = updatedUser;
-
-      res.json(userWithoutPassword);
+      const organizationId = req.user?.role === Role.ADMIN ? undefined : req.user?.organizationId;
+      const updatedUser = await userRepository.update(id, data, organizationId);
+      if (!updatedUser) {
+        throw new AppError(404, 'User not found or access denied');
+      }
+      res.json(updatedUser);
     } catch (error) {
       next(error);
     }
@@ -115,12 +111,11 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      const user = await userRepository.findById(id);
-      if (!user) {
-        throw new AppError(404, 'User not found');
+      const organizationId = req.user?.role === Role.ADMIN ? undefined : req.user?.organizationId;
+      const deletedUser = await userRepository.delete(id, organizationId);
+      if (!deletedUser) {
+        throw new AppError(404, 'User not found or access denied');
       }
-
-      await userRepository.delete(id);
       res.status(204).send();
     } catch (error) {
       next(error);

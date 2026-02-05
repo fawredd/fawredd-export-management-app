@@ -7,8 +7,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class ProductRepository {
-  async findAll() {
+  async findAll(organizationId?: string | null) {
     return prisma.product.findMany({
+      where: organizationId ? { organizationId } : undefined,
       include: {
         tariffPosition: true,
         unit: true,
@@ -20,9 +21,12 @@ export class ProductRepository {
     });
   }
 
-  async findById(id: string) {
-    return prisma.product.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.product.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         tariffPosition: true,
         unit: true,
@@ -35,9 +39,12 @@ export class ProductRepository {
     });
   }
 
-  async findBySku(sku: string) {
-    return prisma.product.findUnique({
-      where: { sku },
+  async findBySku(sku: string, organizationId?: string | null) {
+    return prisma.product.findFirst({
+      where: {
+        sku,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         tariffPosition: true,
         unit: true,
@@ -69,7 +76,11 @@ export class ProductRepository {
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.product.delete({ where: { id } });
   }
 }

@@ -28,9 +28,14 @@ This document gives AI agents a small, actionable context for working on the `fa
 - Always ask for **explicit human approval** before starting new features or database-breaking changes.
 - Follow project guidelines (TypeScript strict, Zod for validation, Prisma repositories, layered architecture). See `ai.backend.instructions.md` and `ai.frontend.instructions.md`.
 - No secrets or real credentials in commits. Use `.env.example` placeholders only.
+- **Type Safety**: Avoid using the `any` type. Explicitly define data types for all variables, parameters, and return types. If you encounter `any` in existing code during your task, research the correct type and refactor it.
 - Use Decimal fields for money (`@db.Decimal(20,6)`) when modifying Prisma schema.
 - All code changes must include or update tests (unit or integration) and pass linting (`eslint`) and formatting (`prettier` if present).
 - Follow security best practices: use `helmet`, properly scoped `CORS_ORIGIN`, rate limiter, and HTTPOONLY cookies for JWT where applicable.
+- **Multi-Tenancy Isolation**: Every database query or update MUST be scoped to the authenticated user's `organizationId`. Never perform operations on shared models without this filter.
+- **Data Sanitization**: Always exclude sensitive fields like `password` from API responses and caching layers.
+- **Generic Auth Errors**: Use non-descriptive error messages for authentication failures (e.g., "Invalid email or password") to prevent user enumeration.
+- **Password Complexity**: Enforce strong requirements (min 8 characters, uppercase, lowercase, number, special character) in all password-related schemas.
 
 ---
 

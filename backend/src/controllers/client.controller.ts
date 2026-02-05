@@ -13,7 +13,10 @@ export class ClientController {
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const client = await prisma.client.create({
-        data: req.body,
+        data: {
+          ...req.body,
+          organizationId: req.user?.organizationId,
+        },
       });
       res.status(201).json(client);
     } catch (error) {
@@ -24,6 +27,7 @@ export class ClientController {
   async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const clients = await prisma.client.findMany({
+        where: req.user?.organizationId ? { organizationId: req.user.organizationId } : undefined,
         include: {
           budgets: {
             orderBy: { createdAt: 'desc' },
@@ -39,8 +43,11 @@ export class ClientController {
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const client = await prisma.client.findUnique({
-        where: { id: req.params.id },
+      const client = await prisma.client.findFirst({
+        where: {
+          id: req.params.id,
+          ...(req.user?.organizationId ? { organizationId: req.user.organizationId } : {}),
+        },
         include: {
           budgets: {
             orderBy: { createdAt: 'desc' },
@@ -58,6 +65,16 @@ export class ClientController {
 
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = req.user?.organizationId;
+      if (organizationId) {
+        const existing = await prisma.client.findFirst({
+          where: { id: req.params.id, organizationId },
+        });
+        if (!existing) {
+          throw new AppError(404, 'Client not found');
+        }
+      }
+
       const client = await prisma.client.update({
         where: { id: req.params.id },
         data: req.body,
@@ -70,6 +87,16 @@ export class ClientController {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = req.user?.organizationId;
+      if (organizationId) {
+        const existing = await prisma.client.findFirst({
+          where: { id: req.params.id, organizationId },
+        });
+        if (!existing) {
+          throw new AppError(404, 'Client not found');
+        }
+      }
+
       await prisma.client.delete({
         where: { id: req.params.id },
       });

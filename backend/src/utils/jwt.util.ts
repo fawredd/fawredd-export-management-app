@@ -9,6 +9,7 @@ export interface JWTPayload {
   id: string;
   email: string;
   role: Role;
+  organizationId?: string | null;
 }
 
 export const generateToken = (payload: JWTPayload): string => {
@@ -19,7 +20,7 @@ export const generateToken = (payload: JWTPayload): string => {
     throw new Error('JWT_SECRET is not defined');
   }
 
-  return jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiresIn });
+  return jwt.sign(payload, jwtSecret as string, { expiresIn: jwtExpiresIn as any });
 };
 
 export const verifyToken = (token: string): JWTPayload => {

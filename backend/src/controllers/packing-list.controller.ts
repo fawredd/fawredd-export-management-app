@@ -25,6 +25,7 @@ export class PackingListController {
         budgetId,
         page,
         limit,
+        organizationId: (req as any).user?.organizationId,
       });
 
       res.json({
@@ -45,7 +46,10 @@ export class PackingListController {
   async getPackingListById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = packingListIdSchema.parse(req.params);
-      const packingList = await packingListService.getPackingListById(id);
+      const packingList = await packingListService.getPackingListById(
+        id,
+        (req as any).user?.organizationId,
+      );
 
       res.json({
         success: true,
@@ -64,7 +68,10 @@ export class PackingListController {
   async createPackingList(req: Request, res: Response, next: NextFunction) {
     try {
       const data = createPackingListSchema.parse(req.body);
-      const packingList = await packingListService.createPackingList(data);
+      const packingList = await packingListService.createPackingList({
+        ...data,
+        organizationId: (req as any).user?.organizationId,
+      });
 
       res.status(201).json({
         success: true,
@@ -87,7 +94,10 @@ export class PackingListController {
         throw new Error('budgetId is required');
       }
 
-      const packingList = await packingListService.autoGenerateFromBudget(budgetId);
+      const packingList = await packingListService.autoGenerateFromBudget(
+        budgetId,
+        (req as any).user?.organizationId,
+      );
 
       res.status(201).json({
         success: true,
@@ -107,7 +117,11 @@ export class PackingListController {
     try {
       const { id } = packingListIdSchema.parse(req.params);
       const data = updatePackingListSchema.parse(req.body);
-      const packingList = await packingListService.updatePackingList(id, data);
+      const packingList = await packingListService.updatePackingList(
+        id,
+        data,
+        (req as any).user?.organizationId,
+      );
 
       res.json({
         success: true,
@@ -145,7 +159,7 @@ export class PackingListController {
   async deletePackingList(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = packingListIdSchema.parse(req.params);
-      await packingListService.deletePackingList(id);
+      await packingListService.deletePackingList(id, (req as any).user?.organizationId);
 
       res.json({
         success: true,

@@ -25,6 +25,7 @@ export class InvoiceController {
         budgetId,
         page,
         limit,
+        organizationId: (req as any).user?.organizationId,
       });
 
       res.json({
@@ -45,7 +46,7 @@ export class InvoiceController {
   async getInvoiceById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = invoiceIdSchema.parse(req.params);
-      const invoice = await invoiceService.getInvoiceById(id);
+      const invoice = await invoiceService.getInvoiceById(id, (req as any).user?.organizationId);
 
       res.json({
         success: true,
@@ -64,7 +65,10 @@ export class InvoiceController {
   async createInvoice(req: Request, res: Response, next: NextFunction) {
     try {
       const data = createInvoiceSchema.parse(req.body);
-      const invoice = await invoiceService.createInvoice(data);
+      const invoice = await invoiceService.createInvoice({
+        ...data,
+        organizationId: (req as any).user?.organizationId,
+      });
 
       res.status(201).json({
         success: true,
@@ -84,7 +88,11 @@ export class InvoiceController {
     try {
       const { id } = invoiceIdSchema.parse(req.params);
       const data = updateInvoiceSchema.parse(req.body);
-      const invoice = await invoiceService.updateInvoice(id, data);
+      const invoice = await invoiceService.updateInvoice(
+        id,
+        data,
+        (req as any).user?.organizationId,
+      );
 
       res.json({
         success: true,
@@ -122,7 +130,7 @@ export class InvoiceController {
   async deleteInvoice(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = invoiceIdSchema.parse(req.params);
-      await invoiceService.deleteInvoice(id);
+      await invoiceService.deleteInvoice(id, (req as any).user?.organizationId);
 
       res.json({
         success: true,

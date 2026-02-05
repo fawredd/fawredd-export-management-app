@@ -14,13 +14,15 @@ export class ExportTaskRepository {
     countryId?: string;
     page?: number;
     limit?: number;
+    organizationId?: string | null;
   }) {
-    const { status, countryId, page = 1, limit = 20 } = filters || {};
+    const { status, countryId, page = 1, limit = 20, organizationId } = filters || {};
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (status) where.status = status;
     if (countryId) where.countryId = countryId;
+    if (organizationId) where.organizationId = organizationId;
 
     const [exportTasks, total] = await Promise.all([
       prisma.exportTask.findMany({
@@ -62,9 +64,12 @@ export class ExportTaskRepository {
   /**
    * Find export task by ID
    */
-  async findById(id: string) {
-    return prisma.exportTask.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.exportTask.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         country: true,
         products: {
@@ -83,6 +88,7 @@ export class ExportTaskRepository {
   async create(data: {
     description: string;
     countryId: string;
+    organizationId?: string | null;
     status?: TaskStatus;
     dueDate?: Date;
     productIds?: string[];
@@ -118,7 +124,13 @@ export class ExportTaskRepository {
       completedAt: Date | null;
       productIds: string[];
     }>,
+    organizationId?: string | null,
   ) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
+
     const { productIds, ...updateData } = data;
 
     return prisma.exportTask.update({
@@ -141,7 +153,16 @@ export class ExportTaskRepository {
   /**
    * Update task status
    */
-  async updateStatus(id: string, status: TaskStatus, completedAt?: Date) {
+  async updateStatus(
+    id: string,
+    status: TaskStatus,
+    completedAt?: Date,
+    organizationId?: string | null,
+  ) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.exportTask.update({
       where: { id },
       data: {
@@ -154,7 +175,11 @@ export class ExportTaskRepository {
   /**
    * Delete export task
    */
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.exportTask.delete({
       where: { id },
     });

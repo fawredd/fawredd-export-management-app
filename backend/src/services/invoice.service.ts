@@ -9,15 +9,20 @@ export class InvoiceService {
   /**
    * Get all invoices with filters
    */
-  async getAllInvoices(filters?: { budgetId?: string; page?: number; limit?: number }) {
+  async getAllInvoices(filters?: {
+    budgetId?: string;
+    page?: number;
+    limit?: number;
+    organizationId?: string | null;
+  }) {
     return invoiceRepository.findAll(filters);
   }
 
   /**
    * Get invoice by ID
    */
-  async getInvoiceById(id: string) {
-    const invoice = await invoiceRepository.findById(id);
+  async getInvoiceById(id: string, organizationId?: string | null) {
+    const invoice = await invoiceRepository.findById(id, organizationId);
     if (!invoice) {
       throw new Error('Invoice not found');
     }
@@ -27,9 +32,9 @@ export class InvoiceService {
   /**
    * Create new invoice from budget
    */
-  async createInvoice(data: CreateInvoiceInput) {
+  async createInvoice(data: CreateInvoiceInput & { organizationId?: string | null }) {
     // Verify budget exists and is approved
-    const budget = await budgetRepository.findById(data.budgetId);
+    const budget = await budgetRepository.findById(data.budgetId, data.organizationId);
     if (!budget) {
       throw new Error('Budget not found');
     }
@@ -63,9 +68,9 @@ export class InvoiceService {
   /**
    * Update invoice
    */
-  async updateInvoice(id: string, data: UpdateInvoiceInput) {
+  async updateInvoice(id: string, data: UpdateInvoiceInput, organizationId?: string | null) {
     // Check if invoice exists
-    await this.getInvoiceById(id);
+    await this.getInvoiceById(id, organizationId);
 
     // If updating invoice number, check if new number already exists
     if (data.invoiceNumber) {
@@ -112,9 +117,9 @@ export class InvoiceService {
   /**
    * Delete invoice
    */
-  async deleteInvoice(id: string) {
+  async deleteInvoice(id: string, organizationId?: string | null) {
     // Check if invoice exists
-    const invoice = await this.getInvoiceById(id);
+    const invoice = await this.getInvoiceById(id, organizationId);
 
     // Revert budget status if needed
     await budgetRepository.update(invoice.budgetId, { status: 'APPROVED' });

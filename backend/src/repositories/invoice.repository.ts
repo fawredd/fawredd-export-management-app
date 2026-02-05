@@ -15,6 +15,7 @@ export class InvoiceRepository {
 
     const where: any = {};
     if (budgetId) where.budgetId = budgetId;
+    if (filters?.organizationId) where.organizationId = filters.organizationId;
 
     const [invoices, total] = await Promise.all([
       prisma.invoice.findMany({
@@ -53,9 +54,12 @@ export class InvoiceRepository {
   /**
    * Find invoice by ID
    */
-  async findById(id: string) {
-    return prisma.invoice.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.invoice.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         budget: {
           include: {
@@ -158,7 +162,11 @@ export class InvoiceRepository {
   /**
    * Delete invoice
    */
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.invoice.delete({
       where: { id },
     });

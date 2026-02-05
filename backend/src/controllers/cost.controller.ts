@@ -17,6 +17,7 @@ export class CostController {
         data: {
           ...req.body,
           value: toPrismaDecimal(req.body.value),
+          organizationId: req.user?.organizationId,
         },
       });
       res.status(201).json(cost);
@@ -28,6 +29,7 @@ export class CostController {
   async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const costs = await prisma.cost.findMany({
+        where: req.user?.organizationId ? { organizationId: req.user.organizationId } : undefined,
         orderBy: { createdAt: 'desc' },
       });
       res.json(costs);
@@ -38,8 +40,11 @@ export class CostController {
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const cost = await prisma.cost.findUnique({
-        where: { id: req.params.id },
+      const cost = await prisma.cost.findFirst({
+        where: {
+          id: req.params.id,
+          ...(req.user?.organizationId ? { organizationId: req.user.organizationId } : {}),
+        },
       });
       if (!cost) {
         throw new AppError(404, 'Cost not found');
@@ -52,6 +57,16 @@ export class CostController {
 
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = req.user?.organizationId;
+      if (organizationId) {
+        const existing = await prisma.cost.findFirst({
+          where: { id: req.params.id, organizationId },
+        });
+        if (!existing) {
+          throw new AppError(404, 'Cost not found');
+        }
+      }
+
       const cost = await prisma.cost.update({
         where: { id: req.params.id },
         data: {
@@ -67,6 +82,16 @@ export class CostController {
 
   async delete(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const organizationId = req.user?.organizationId;
+      if (organizationId) {
+        const existing = await prisma.cost.findFirst({
+          where: { id: req.params.id, organizationId },
+        });
+        if (!existing) {
+          throw new AppError(404, 'Cost not found');
+        }
+      }
+
       await prisma.cost.delete({
         where: { id: req.params.id },
       });

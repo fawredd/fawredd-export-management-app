@@ -8,32 +8,39 @@ import { Decimal } from '@prisma/client/runtime/library';
 const prisma = new PrismaClient();
 
 export class BudgetRepository {
-  async findAll() {
+  async findAll(organizationId?: string | null) {
     return prisma.budget.findMany({
+      where: organizationId ? { organizationId } : undefined,
       include: {
         client: true,
+        incoterm: true,
         budgetItems: {
           include: {
             product: true,
           },
         },
         costs: true,
-      },
+      } as any,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findById(id: string) {
-    return prisma.budget.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.budget.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         client: true,
+        incoterm: true,
         budgetItems: {
           include: {
             product: {
               include: {
                 tariffPosition: true,
                 unit: true,
+                taxes: true,
               },
             },
           },
@@ -41,7 +48,7 @@ export class BudgetRepository {
         costs: true,
         invoices: true,
         packingLists: true,
-      },
+      } as any,
     });
   }
 
@@ -55,9 +62,9 @@ export class BudgetRepository {
   }) {
     return prisma.budget.create({
       data: {
-        clientId: data.clientId,
-        incotermId: data.incotermId, // CHANGED
-        organizationId: data.organizationId,
+        client: { connect: { id: data.clientId } },
+        incoterm: { connect: { id: data.incotermId } },
+        organization: data.organizationId ? { connect: { id: data.organizationId } } : undefined,
         totalAmount: data.totalAmount,
         budgetItems: {
           create: data.budgetItems,
@@ -67,10 +74,10 @@ export class BudgetRepository {
               connect: data.costs.map((costId) => ({ id: costId })),
             }
           : undefined,
-      },
+      } as any,
       include: {
         client: true,
-        incoterm: true, // ADD THIS
+        incoterm: true,
         budgetItems: {
           include: {
             product: true,
@@ -81,7 +88,13 @@ export class BudgetRepository {
     });
   }
 
-  async updateStatus(id: string, status: BudgetStatus) {
+  async updateStatus(id: string, status: BudgetStatus, organizationId?: string | null) {
+    // Ensure the budget belongs to the organization if provided
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
+
     return prisma.budget.update({
       where: { id },
       data: { status },
@@ -111,7 +124,11 @@ export class BudgetRepository {
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.budget.delete({ where: { id } });
   }
 }

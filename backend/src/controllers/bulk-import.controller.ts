@@ -44,7 +44,7 @@ export class BulkImportController {
 
       // Process each record
       for (let i = 0; i < records.length; i++) {
-        const record = records[i];
+        const record = records[i] as any;
 
         try {
           // Validate required fields
@@ -53,7 +53,7 @@ export class BulkImportController {
           }
 
           // Check if SKU already exists
-          const existing = await productRepository.findBySku(record.sku);
+          const existing = await productRepository.findBySku(record.sku, req.user?.organizationId);
           if (existing) {
             throw new Error(`SKU ${record.sku} already exists`);
           }

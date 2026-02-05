@@ -28,6 +28,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
     });
 
     return {
@@ -36,6 +37,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        organizationId: user.organizationId,
       },
       token,
     };
@@ -43,19 +45,22 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await userRepository.findByEmail(email);
+    const genericErrorMessage = 'Invalid email or password';
+
     if (!user) {
-      throw new AppError(401, 'Invalid credentials');
+      throw new AppError(401, genericErrorMessage);
     }
 
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
-      throw new AppError(401, 'Invalid credentials');
+      throw new AppError(401, genericErrorMessage);
     }
 
     const token = generateToken({
       id: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
     });
 
     return {
@@ -64,6 +69,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        organizationId: user.organizationId,
       },
       token,
     };

@@ -19,6 +19,7 @@ export class ExportTaskService {
     status?: TaskStatus;
     page?: number;
     limit?: number;
+    organizationId?: string | null;
   }) {
     return exportTaskRepository.findAll(filters);
   }
@@ -26,8 +27,8 @@ export class ExportTaskService {
   /**
    * Get export task by ID
    */
-  async getExportTaskById(id: string) {
-    const exportTask = await exportTaskRepository.findById(id);
+  async getExportTaskById(id: string, organizationId?: string | null) {
+    const exportTask = await exportTaskRepository.findById(id, organizationId);
     if (!exportTask) {
       throw new Error('Export task not found');
     }
@@ -37,7 +38,7 @@ export class ExportTaskService {
   /**
    * Create new export task
    */
-  async createExportTask(data: CreateExportTaskInput) {
+  async createExportTask(data: CreateExportTaskInput & { organizationId?: string | null }) {
     // Verify country exists
     const country = await countryRepository.findById(data.countryId);
     if (!country) {
@@ -56,9 +57,9 @@ export class ExportTaskService {
   /**
    * Update export task
    */
-  async updateExportTask(id: string, data: UpdateExportTaskInput) {
+  async updateExportTask(id: string, data: UpdateExportTaskInput, organizationId?: string | null) {
     // Check if task exists
-    await this.getExportTaskById(id);
+    await this.getExportTaskById(id, organizationId);
 
     // Verify country if being updated
     if (data.countryId) {
@@ -80,9 +81,9 @@ export class ExportTaskService {
   /**
    * Update task status
    */
-  async updateTaskStatus(id: string, data: UpdateTaskStatusInput) {
+  async updateTaskStatus(id: string, data: UpdateTaskStatusInput, organizationId?: string | null) {
     // Check if task exists
-    await this.getExportTaskById(id);
+    await this.getExportTaskById(id, organizationId);
 
     const completedAt = data.completedAt ? new Date(data.completedAt) : undefined;
 
@@ -92,9 +93,9 @@ export class ExportTaskService {
   /**
    * Delete export task
    */
-  async deleteExportTask(id: string) {
+  async deleteExportTask(id: string, organizationId?: string | null) {
     // Check if task exists
-    await this.getExportTaskById(id);
+    await this.getExportTaskById(id, organizationId);
 
     return exportTaskRepository.delete(id);
   }

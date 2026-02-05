@@ -14,16 +14,19 @@ const productRepository = new ProductRepository();
 const prisma = new PrismaClient();
 
 export class BudgetService {
-  async createBudget(data: {
-    clientId: string;
-    incoterm: string; // Now expects incoterm NAME (e.g., "FOB")
-    items: Array<{
-      productId: string;
-      quantity: number;
-      unitPrice: number;
-    }>;
-    costIds?: string[];
-  }) {
+  async createBudget(
+    data: {
+      clientId: string;
+      incoterm: string; // Now expects incoterm NAME (e.g., "FOB")
+      items: Array<{
+        productId: string;
+        quantity: number;
+        unitPrice: number;
+      }>;
+      costIds?: string[];
+    },
+    organizationId?: string | null,
+  ) {
     // Find the incoterm by name to get its ID
     const incoterm = await prisma.incoterm.findUnique({
       where: { name: data.incoterm },
@@ -34,12 +37,11 @@ export class BudgetService {
     }
 
     // Get user's organization
-    const user = await prisma.user.findFirst();
-    const organizationId = user?.organizationId || null;
+    const finalOrganizationId = organizationId || null;
 
     // Fetch products to get weight and volume
     const products = await Promise.all(
-      data.items.map((item) => productRepository.findById(item.productId)),
+      data.items.map((item) => productRepository.findById(item.productId, finalOrganizationId)),
     );
 
     // Validate all products exist
@@ -51,7 +53,7 @@ export class BudgetService {
     let costs: any[] = [];
     if (data.costIds && data.costIds.length > 0) {
       costs = await prisma.cost.findMany({
-        where: { id: { in: data.costIds } },
+        where: { id: { in: data.costIds }, organizationId: finalOrganizationId },
       });
     }
 
@@ -94,7 +96,7 @@ export class BudgetService {
     const budget = await budgetRepository.create({
       clientId: data.clientId,
       incotermId: incoterm.id, // Use incotermId
-      organizationId,
+      organizationId: finalOrganizationId,
       totalAmount: toPrismaDecimal(calculation.totalAmount),
       budgetItems,
       costs: data.costIds,
@@ -103,36 +105,36 @@ export class BudgetService {
     return budget;
   }
 
-  async getAllBudgets() {
-    return budgetRepository.findAll();
+  async getAllBudgets(organizationId?: string | null) {
+    return budgetRepository.findAll(organizationId);
   }
 
-  async getBudgetById(id: string) {
-    const budget = await budgetRepository.findById(id);
+  async getBudgetById(id: string, organizationId?: string | null) {
+    const budget = await budgetRepository.findById(id, organizationId);
     if (!budget) {
       throw new AppError(404, 'Budget not found');
     }
     return budget;
   }
 
-  async updateBudgetStatus(id: string, status: BudgetStatus) {
-    const budget = await budgetRepository.findById(id);
+  async updateBudgetStatus(id: string, status: BudgetStatus, organizationId?: string | null) {
+    const budget = await budgetRepository.findById(id, organizationId);
     if (!budget) {
       throw new AppError(404, 'Budget not found');
     }
-    return budgetRepository.updateStatus(id, status);
+    return budgetRepository.updateStatus(id, status, organizationId);
   }
 
-  async deleteBudget(id: string) {
-    const budget = await budgetRepository.findById(id);
+  async deleteBudget(id: string, organizationId?: string | null) {
+    const budget = await budgetRepository.findById(id, organizationId);
     if (!budget) {
       throw new AppError(404, 'Budget not found');
     }
-    return budgetRepository.delete(id);
+    return budgetRepository.delete(id, organizationId);
   }
 
-  async generateShareToken(id: string, expiresInDays: number = 30) {
-    const budget = await budgetRepository.findById(id);
+  async generateShareToken(id: string, expiresInDays: number = 30, organizationId?: string | null) {
+    const budget = await budgetRepository.findById(id, organizationId);
     if (!budget) {
       throw new AppError(404, 'Budget not found');
     }

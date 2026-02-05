@@ -9,8 +9,9 @@ export class TaxRepository {
   /**
    * Find all taxes
    */
-  async findAll() {
+  async findAll(organizationId?: string | null) {
     return prisma.tax.findMany({
+      where: organizationId ? { organizationId } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         product: {
@@ -27,9 +28,12 @@ export class TaxRepository {
   /**
    * Find tax by ID
    */
-  async findById(id: string) {
-    return prisma.tax.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string | null) {
+    return prisma.tax.findFirst({
+      where: {
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: {
         product: true,
       },
@@ -39,9 +43,12 @@ export class TaxRepository {
   /**
    * Find taxes by product ID
    */
-  async findByProductId(productId: string) {
+  async findByProductId(productId: string, organizationId?: string | null) {
     return prisma.tax.findMany({
-      where: { productId },
+      where: {
+        productId,
+        ...(organizationId ? { organizationId } : {}),
+      },
       orderBy: { name: 'asc' },
     });
   }
@@ -49,7 +56,12 @@ export class TaxRepository {
   /**
    * Create new tax
    */
-  async create(data: { productId: string; name: string; percentage: number }) {
+  async create(data: {
+    productId: string;
+    name: string;
+    percentage: number;
+    organizationId?: string | null;
+  }) {
     return prisma.tax.create({
       data,
       include: {
@@ -67,7 +79,15 @@ export class TaxRepository {
   /**
    * Update tax
    */
-  async update(id: string, data: Partial<{ name: string; percentage: number }>) {
+  async update(
+    id: string,
+    data: Partial<{ name: string; percentage: number }>,
+    organizationId?: string | null,
+  ) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.tax.update({
       where: { id },
       data,
@@ -80,7 +100,11 @@ export class TaxRepository {
   /**
    * Delete tax
    */
-  async delete(id: string) {
+  async delete(id: string, organizationId?: string | null) {
+    if (organizationId) {
+      const existing = await this.findById(id, organizationId);
+      if (!existing) return null;
+    }
     return prisma.tax.delete({
       where: { id },
     });

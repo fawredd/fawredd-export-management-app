@@ -20,6 +20,11 @@ model Organization {
   clients     Client[]
   products    Product[]
   budgets     Budget[]
+  costs       Cost[]
+  invoices    Invoice[]
+  packingLists PackingList[]
+  exportTasks ExportTask[]
+  taxes       Tax[]
   pricingConfiguration  PricingConfiguration?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -163,13 +168,15 @@ enum PriceType {
 }
 
 model Tax {
-  id         String   @id @default(cuid())
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId  String
-  name       String
-  percentage Decimal  @db.Decimal(8, 4)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String        @id @default(cuid())
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId      String
+  name           String
+  percentage     Decimal       @db.Decimal(8, 4)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 // ============================================
@@ -185,6 +192,8 @@ model ExportTask {
   products    Product[]
   dueDate     DateTime?
   completedAt DateTime?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -219,6 +228,8 @@ model Cost {
   incotermToBeIncluded   Incoterm  @relation("CostIncotermLimit", fields: [incotermToBeIncludedId], references: [id])
   incotermToBeIncludedId String    // Include this cost for all Incoterms up to and including this one
   budgets                Budget[]
+  organization           Organization? @relation(fields: [organizationId], references: [id])
+  organizationId         String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 }
@@ -338,6 +349,8 @@ model Invoice {
   totalAmount   Decimal  @db.Decimal(20, 6)
   issueDate     DateTime @default(now())
   dueDate       DateTime?
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -348,6 +361,8 @@ model PackingList {
   budgetId  String
   details   Json
   pdfUrl    String?
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

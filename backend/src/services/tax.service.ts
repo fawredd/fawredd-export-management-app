@@ -11,15 +11,15 @@ export class TaxService {
   /**
    * Get all taxes
    */
-  async getAllTaxes() {
-    return taxRepository.findAll();
+  async getAllTaxes(organizationId?: string | null) {
+    return taxRepository.findAll(organizationId);
   }
 
   /**
    * Get tax by ID
    */
-  async getTaxById(id: string) {
-    const tax = await taxRepository.findById(id);
+  async getTaxById(id: string, organizationId?: string | null) {
+    const tax = await taxRepository.findById(id, organizationId);
     if (!tax) {
       throw new Error('Tax not found');
     }
@@ -29,22 +29,22 @@ export class TaxService {
   /**
    * Get taxes by product ID
    */
-  async getTaxesByProductId(productId: string) {
+  async getTaxesByProductId(productId: string, organizationId?: string | null) {
     // Verify product exists
-    const product = await productRepository.findById(productId);
+    const product = await productRepository.findById(productId, organizationId);
     if (!product) {
       throw new Error('Product not found');
     }
 
-    return taxRepository.findByProductId(productId);
+    return taxRepository.findByProductId(productId, organizationId);
   }
 
   /**
    * Create new tax
    */
-  async createTax(data: CreateTaxInput) {
+  async createTax(data: CreateTaxInput & { organizationId?: string | null }) {
     // Verify product exists
-    const product = await productRepository.findById(data.productId);
+    const product = await productRepository.findById(data.productId, data.organizationId);
     if (!product) {
       throw new Error('Product not found');
     }
@@ -55,21 +55,21 @@ export class TaxService {
   /**
    * Update tax
    */
-  async updateTax(id: string, data: UpdateTaxInput) {
+  async updateTax(id: string, data: UpdateTaxInput, organizationId?: string | null) {
     // Check if tax exists
-    await this.getTaxById(id);
+    await this.getTaxById(id, organizationId);
 
-    return taxRepository.update(id, data);
+    return taxRepository.update(id, data, organizationId);
   }
 
   /**
    * Delete tax
    */
-  async deleteTax(id: string) {
+  async deleteTax(id: string, organizationId?: string | null) {
     // Check if tax exists
-    await this.getTaxById(id);
+    await this.getTaxById(id, organizationId);
 
-    return taxRepository.delete(id);
+    return taxRepository.delete(id, organizationId);
   }
 
   /**
