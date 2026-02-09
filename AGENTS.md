@@ -73,10 +73,11 @@ This document gives AI agents a small, actionable context for working on the `fa
 
 ```bash
 # from repo root
-docker-compose up --build
+docker compose up --build
 ```
 
 - Or run apps individually:
+  - `docker compose up postgres redis --build`
   - `cd backend && npm install && npm run dev`
   - `cd frontend && npm install && npm run dev`
 
@@ -136,44 +137,6 @@ Agents must post this and wait for an explicit human **OK** before proceeding.
 - Respect repository conventions and the `ai.*.instructions.md` files.
 
 ---
-
-## 11) Automated agent workflows
-
-A safe automation is provided at `.github/workflows/agent-lint-fix.yml`.
-
-Purpose:
-
-- Run `eslint --fix` and formatters for `backend` and `frontend` on a weekly schedule or manual dispatch.
-- Run basic tests and collect job logs.
-- Create a **draft pull request** (`agent/lint-fixes-*`) with committed fixes for human review.
-
-Rules for automated PRs:
-
-- PRs are **drafts** and MUST be reviewed by a human before merge.
-- Agents must **not** auto-merge these PRs or perform database migrations.
-- If the draft PR includes significant changes, run full CI and request explicit approval before merging.
-
----
-
-## Local Agent: Lint Fix Mode (run on your machine)
-
-If you prefer to run lint/format fixes locally (e.g., from VS Code), a small helper script is available at `scripts/agent-lint-local.sh`.
-
-Behavior:
-
-- Runs `eslint --fix` (or `npm run lint:fix`) in `backend` and `frontend`.
-- Runs basic tests (non-fatal) so you can see quick failures.
-- If there are file changes, the script creates a local branch `agent/lint-fixes-local-<timestamp>`, commits the fixes, pushes the branch, and (optionally) opens a draft PR using the `gh` CLI if installed.
-
-How to run:
-
-```bash
-# Make executable once
-chmod +x scripts/agent-lint-local.sh
-
-# Run from repo root
-./scripts/agent-lint-local.sh
-```
 
 Notes & safety:
 
