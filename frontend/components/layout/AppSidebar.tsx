@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Package, Users, Building2, FileText, LogOut } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/features/auth"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },

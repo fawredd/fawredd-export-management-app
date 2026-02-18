@@ -654,9 +654,6 @@ export default function NewBudgetPage() {
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => router.push("/budgets")}>
-            Cancel
-          </Button>
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? (
               <>

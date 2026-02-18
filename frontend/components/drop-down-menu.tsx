@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/features/auth";
 import { useTheme, THEMES } from "./providers/theme-provider";
 
 import {

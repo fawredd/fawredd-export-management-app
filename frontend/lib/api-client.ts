@@ -31,6 +31,22 @@ class ApiClient {
         return Promise.reject(error);
       }
     );
+
+    // Request interceptor for idempotency
+    this.client.interceptors.request.use((config) => {
+      if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
+        // Generate a unique ID for this request attempt
+        // In a real-world scenario, you might want to link this to a specific action
+        // to persist the same key across retries of the same operation.
+        if (!config.headers['X-Idempotency-Key']) {
+          const uuid = typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2, 15);
+          config.headers['X-Idempotency-Key'] = uuid;
+        }
+      }
+      return config;
+    });
   }
 
   // Auth endpoints

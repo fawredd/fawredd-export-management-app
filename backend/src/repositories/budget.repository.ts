@@ -54,11 +54,11 @@ export class BudgetRepository {
 
   async create(data: {
     clientId: string;
-    incotermId: string; // CHANGED from Incoterm to string
-    organizationId?: string;
+    incotermId: string;
+    organizationId?: string | null;
     totalAmount?: Decimal;
     budgetItems: any[];
-    costs?: any[];
+    costs?: string[];
   }) {
     return prisma.budget.create({
       data: {
@@ -69,12 +69,12 @@ export class BudgetRepository {
         budgetItems: {
           create: data.budgetItems,
         },
-        costs: data.costs
+        costs: data.costs?.length
           ? {
               connect: data.costs.map((costId) => ({ id: costId })),
             }
           : undefined,
-      } as any,
+      },
       include: {
         client: true,
         incoterm: true,

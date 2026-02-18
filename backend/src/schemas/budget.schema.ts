@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Incoterm enum schema
  */
-export const incotermSchema = z.enum(['FOB', 'CIF']);
+export const incotermSchema = z.enum(['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']);
 
 /**
  * Budget status enum schema
@@ -39,6 +39,12 @@ export const createBudgetSchema = z.object({
   status: budgetStatusSchema.optional().default('DRAFT'),
   budgetItems: z.array(budgetItemSchema).min(1, 'At least one budget item is required'),
   costIds: z.array(z.string().cuid('Invalid cost ID format')).optional(),
+  expenses: z.array(z.object({
+    id: z.string().optional(),
+    description: z.string(),
+    value: z.number(),
+    type: z.string().optional()
+  })).optional(),
   totalAmount: z.number().positive('Total amount must be positive').optional(),
 });
 

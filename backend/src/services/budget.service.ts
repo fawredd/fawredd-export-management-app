@@ -24,10 +24,17 @@ export class BudgetService {
         unitPrice: number;
       }>;
       costIds?: string[];
+      expenses?: Array<{
+        id?: string;
+        description: string;
+        value: number;
+        type?: string;
+      }>;
     },
     organizationId?: string | null,
   ) {
     // Find the incoterm by name to get its ID
+    console.log('Creating budget for client:', data.clientId, 'incoterm:', data.incoterm);
     const incoterm = await prisma.incoterm.findUnique({
       where: { name: data.incoterm },
     });
@@ -49,12 +56,39 @@ export class BudgetService {
       throw new AppError(404, 'One or more products not found');
     }
 
-    // Fetch costs if provided
+    // Fetch existing costs
     let costs: any[] = [];
     if (data.costIds && data.costIds.length > 0) {
+      console.log('Fetching costs:', data.costIds);
       costs = await prisma.cost.findMany({
         where: { id: { in: data.costIds }, organizationId: finalOrganizationId },
       });
+      console.log('Found costs:', costs.length);
+    }
+
+    // Handle ad-hoc expenses (create new Cost records)
+    if (data.expenses && data.expenses.length > 0) {
+      console.log('Creating ad-hoc expenses:', data.expenses.length);
+      const newCosts = await Promise.all(
+        data.expenses.map(async (exp) => {
+          if (exp.id) {
+            // If it has an ID, try to find it (might be redundant if costIds is used, but safe)
+            const existing = await prisma.cost.findUnique({ where: { id: exp.id } });
+            return existing;
+          }
+
+          return prisma.cost.create({
+            data: {
+              type: (exp.type as any) || 'FIXED',
+              description: exp.description,
+              value: toPrismaDecimal(exp.value),
+              organizationId: finalOrganizationId,
+              incotermToBeIncludedId: incoterm.id, // Associate with current incoterm by default
+            },
+          });
+        }),
+      );
+      costs = [...costs, ...newCosts.filter(Boolean)];
     }
 
     // Prepare items with weight and volume
@@ -93,13 +127,14 @@ export class BudgetService {
     }));
 
     // Create budget with calculation breakdowns
+    console.log('Saving budget to repository...');
     const budget = await budgetRepository.create({
       clientId: data.clientId,
       incotermId: incoterm.id, // Use incotermId
       organizationId: finalOrganizationId,
       totalAmount: toPrismaDecimal(calculation.totalAmount),
       budgetItems,
-      costs: data.costIds,
+      costs: costs.map(c => c.id), // Only connect costs that were actually found
     });
 
     return budget;

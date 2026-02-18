@@ -35,6 +35,7 @@ import pricingRoutes from './routes/pricing.routes';
 
 // Import middleware
 import { errorHandler } from './middlewares/error.middleware';
+import { idempotency } from './middlewares/idempotency.middleware';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -54,7 +55,11 @@ const httpLogger = pinoHttp({ logger });
 
 // Middleware
 app.use(httpLogger);
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -78,6 +83,7 @@ const limiter = rateLimit({
 });
 
 app.use('/api/', limiter);
+app.use('/api/', idempotency);
 
 // Auth-specific rate limiting
 const authLimiter = rateLimit({

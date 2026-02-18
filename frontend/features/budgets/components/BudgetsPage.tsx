@@ -113,7 +113,7 @@ export default function BudgetsPage() {
                           <div className="font-medium">{budget.client?.name || "Unknown"}</div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{budget.incoterm}</Badge>
+                          <Badge variant="outline">{budget.incoterm?.name || "N/A"}</Badge>
                         </TableCell>
                         <TableCell>
                           {budget.totalAmount ? (

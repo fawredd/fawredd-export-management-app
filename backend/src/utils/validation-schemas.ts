@@ -109,20 +109,34 @@ export const updateClientSchema = z.object({
 });
 
 // Budget schemas
+const VALID_INCOTERMS = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP'] as const;
+
 export const createBudgetSchema = z.object({
   body: z.object({
     clientId: z.string().min(1, 'Client ID is required'),
-    incoterm: z.nativeEnum(Incoterm),
+    incoterm: z.enum(VALID_INCOTERMS, {
+      errorMap: () => ({ message: `Invalid incoterm. Must be one of: ${VALID_INCOTERMS.join(', ')}` }),
+    }),
     items: z
       .array(
         z.object({
           productId: z.string(),
-          quantity: z.number().int().positive(),
+          quantity: z.number().positive(),
           unitPrice: z.number().positive(),
         }),
       )
       .min(1, 'At least one item is required'),
     costIds: z.array(z.string()).optional(),
+    expenses: z
+      .array(
+        z.object({
+          id: z.string().optional(),
+          description: z.string(),
+          value: z.number(),
+          type: z.string().optional(),
+        }),
+      )
+      .optional(),
   }),
 });
 

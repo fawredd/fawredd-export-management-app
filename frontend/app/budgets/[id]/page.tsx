@@ -34,10 +34,6 @@ export default function BudgetDetailsPage() {
             <div className="flex flex-col items-center justify-center min-h-screen gap-4">
                 <h2 className="text-2xl font-bold">Budget Not Found</h2>
                 <p className="text-muted-foreground">The budget you're looking for doesn't exist.</p>
-                <Button onClick={() => router.push("/budgets")}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Budgets
-                </Button>
             </div>
         )
     }
@@ -64,10 +60,6 @@ export default function BudgetDetailsPage() {
                     description={`Created on ${new Date(budget.createdAt).toLocaleDateString()}`}
                 />
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => router.push("/budgets")}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back
-                    </Button>
                     <Button
                         variant="outline"
                         onClick={() => {
@@ -109,7 +101,7 @@ export default function BudgetDetailsPage() {
                         <CardTitle className="text-sm font-medium">Incoterm</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{budget.incoterm}</p>
+                        <p className="text-2xl font-bold">{budget.incoterm?.name || "N/A"}</p>
                         <p className="text-sm text-muted-foreground">Delivery terms</p>
                     </CardContent>
                 </Card>
@@ -195,7 +187,7 @@ export default function BudgetDetailsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Budget Summary</CardTitle>
-                    <CardDescription>Cost breakdown by Incoterm: {budget.incoterm}</CardDescription>
+                    <CardDescription>Cost breakdown by Incoterm: {budget.incoterm?.name || "N/A"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {/* Products Subtotal */}
@@ -217,8 +209,9 @@ export default function BudgetDetailsPage() {
                         const localCosts = costs.filter((c: any) => !["FREIGHT", "INSURANCE"].includes(c.type)).reduce((sum: number, c: any) => sum + Number(c.value), 0)
 
                         const totalFOB = subtotal + localCosts
+                        const incotermName = budget.incoterm?.name
 
-                        if (budget.incoterm === "EXW" || budget.incoterm === "FCA") {
+                        if (incotermName === "EXW" || incotermName === "FCA") {
                             return (
                                 <>
                                     {localCosts > 0 && (
@@ -231,7 +224,7 @@ export default function BudgetDetailsPage() {
                             )
                         }
 
-                        if (budget.incoterm === "FOB") {
+                        if (incotermName === "FOB") {
                             return (
                                 <>
                                     {localCosts > 0 && (
@@ -249,7 +242,7 @@ export default function BudgetDetailsPage() {
                             )
                         }
 
-                        if (["CIF", "CFR", "CPT", "CIP", "DDP", "DAP"].includes(budget.incoterm)) {
+                        if (["CIF", "CFR", "CPT", "CIP", "DDP", "DAP"].includes(incotermName || "")) {
                             return (
                                 <>
                                     <div className="flex justify-between text-sm">
@@ -262,7 +255,7 @@ export default function BudgetDetailsPage() {
                                         <span className="font-medium">${freight.toFixed(2)}</span>
                                     </div>
 
-                                    {["CIF", "CIP", "DDP"].includes(budget.incoterm) && (
+                                    {["CIF", "CIP", "DDP"].includes(incotermName || "") && (
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Insurance:</span>
                                             <span className="font-medium">${insurance.toFixed(2)}</span>
@@ -275,7 +268,7 @@ export default function BudgetDetailsPage() {
 
                     <Separator />
                     <div className="flex justify-between font-bold text-xl">
-                        <span>Total Amount ({budget.incoterm}):</span>
+                        <span>Total Amount ({budget.incoterm?.name || "N/A"}):</span>
                         <span className="text-primary">
                             ${budget.totalAmount ? Number(budget.totalAmount).toFixed(2) : "0.00"}
                         </span>

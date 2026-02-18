@@ -3,7 +3,7 @@
 import { DropdownAppMenu } from "@/components/drop-down-menu"
 import type React from "react"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/features/auth"
 import { BackButton } from "@/components/navigation/BackButton"
 import { Loader2 } from "lucide-react"
 
@@ -27,7 +27,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col">
       <DropdownAppMenu />
       <main className="w-full max-w-7xl mx-auto px-4 py-6 flex-1">
-        <BackButton />
         {children}
       </main>
     </div>

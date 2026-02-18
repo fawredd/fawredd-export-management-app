@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Package, FileText, Building2, TrendingUp, DollarSign } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/features/auth"
 
 export default function AdminDashboardPage() {
   const router = useRouter()
