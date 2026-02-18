@@ -15,7 +15,7 @@ export class CountryController {
    * @summary Get all countries
    * @returns {Country[]} 200 - List of countries
    */
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(_req: Request, res: Response, next: NextFunction) {
     try {
       const countries = await countryService.getAllCountries();
 

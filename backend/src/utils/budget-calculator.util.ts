@@ -112,7 +112,7 @@ export const calculateBudget = (
 
   // 6. Calculate final total based on Incoterm
   let totalAmount: number;
-  switch (incoterm) {
+  switch (incoterm.name) {
     case 'EXW':
       totalAmount = subtotalProducts; // Just products, no expenses
       break;

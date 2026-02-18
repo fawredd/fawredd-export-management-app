@@ -15,7 +15,7 @@ export class UnitOfMeasureController {
    * @summary Get all units of measure
    * @returns {UnitOfMeasure[]} 200 - List of units
    */
-  async getAllUnits(req: Request, res: Response, next: NextFunction) {
+  async getAllUnits(_req: Request, res: Response, next: NextFunction) {
     try {
       const units = await unitOfMeasureService.getAllUnits();
 

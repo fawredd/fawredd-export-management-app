@@ -9,7 +9,7 @@ export class InvoiceRepository {
   /**
    * Find all invoices with pagination and filters
    */
-  async findAll(filters?: { budgetId?: string; page?: number; limit?: number }) {
+  async findAll(filters?: { budgetId?: string; page?: number; limit?: number; organizationId?: string | null }) {
     const { budgetId, page = 1, limit = 20 } = filters || {};
     const skip = (page - 1) * limit;
 

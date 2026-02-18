@@ -15,7 +15,7 @@ import {
  * Implements export pricing calculations according to Incoterms
  */
 export class PricingCalculatorService {
-  constructor(private _prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) {}
 
   /**
    * Calculate export price for products according to selected Incoterm

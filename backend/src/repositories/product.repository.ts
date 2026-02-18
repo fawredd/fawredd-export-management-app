@@ -64,9 +64,12 @@ export class ProductRepository {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, organizationId?: string | null) {
     return prisma.product.update({
-      where: { id },
+      where: { 
+        id,
+        ...(organizationId ? { organizationId } : {}),
+      },
       data,
       include: {
         tariffPosition: true,

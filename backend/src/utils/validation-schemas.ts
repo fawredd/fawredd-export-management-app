@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { Role, Incoterm, TaskStatus, CostType, BudgetStatus } from '@prisma/client';
+import { Role, TaskStatus, CostType, BudgetStatus } from '@prisma/client';
 
 // Auth schemas
 export const registerSchema = z.object({

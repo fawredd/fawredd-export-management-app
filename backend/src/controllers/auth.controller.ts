@@ -40,7 +40,7 @@ export class AuthController {
     }
   }
 
-  async logout(req: AuthRequest, res: Response, next: NextFunction) {
+  async logout(_req: AuthRequest, res: Response, next: NextFunction) {
     try {
       res.clearCookie('token', {
         httpOnly: true,

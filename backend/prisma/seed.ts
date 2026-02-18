@@ -11,6 +11,9 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seeding...\n');
 
+    // Create schema if it doesn't exist
+    await prisma.$executeRawUnsafe('CREATE SCHEMA IF NOT EXISTS "fawredd-foreign-budgets"');
+
     // 1. Seed Organization
     console.log('📦 Seeding Organization...');
     const org = await prisma.organization.upsert({

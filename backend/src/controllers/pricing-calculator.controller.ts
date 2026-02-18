@@ -46,19 +46,19 @@ export const calculatePricing = async (req: Request, res: Response, next: NextFu
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization ID required' });
     }
-
+    
     // Calculate pricing
     const result = await pricingService.calculateExportPrice(
       validatedData as PricingCalculationRequest,
       organizationId,
     );
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    next(error);
+    return next(error);
   }
 };
 
@@ -86,12 +86,12 @@ export const calculatePricingBatch = async (req: Request, res: Response, next: N
       ),
     );
 
-    res.json({ scenarios: results });
+    return res.json({ scenarios: results });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    next(error);
+    return next(error);
   }
 };
 
@@ -120,9 +120,9 @@ export const getPricingConfig = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    res.json(config);
+    return res.json(config);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -148,12 +148,12 @@ export const updatePricingConfig = async (req: Request, res: Response, next: Nex
       },
     });
 
-    res.json(config);
+    return res.json(config);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    next(error);
+    return next(error);
   }
 };
 
@@ -161,7 +161,7 @@ export const updatePricingConfig = async (req: Request, res: Response, next: Nex
  * Get list of available Incoterms
  * GET /api/pricing/incoterms
  */
-export const getIncoterms = async (req: Request, res: Response, next: NextFunction) => {
+export const getIncoterms = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const incoterms = await prisma.incoterm.findMany({
       orderBy: { name: 'asc' },
