@@ -184,20 +184,23 @@ app.use((req: Request, res: Response) => {
 app.use(errorHandler);
 
 // Start server
-// Start server
 const startServer = async () => {
   try {
     const { connectRedis } = await import('./utils/redis-client');
     await connectRedis();
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Server running on http://localhost:${PORT}`);
-      logger.info(`📚 API Documentation available at http://localhost:${PORT}/api/docs`);
-      logger.info(`🏥 Health check available at http://localhost:${PORT}/health`);
-    });
+    if (process.env.VERCEL !== '1') {
+      app.listen(PORT, () => {
+        logger.info(`🚀 Server running on http://localhost:${PORT}`);
+        logger.info(`📚 API Documentation available at http://localhost:${PORT}/api/docs`);
+        logger.info(`🏥 Health check available at http://localhost:${PORT}/health`);
+      });
+    }
   } catch (error) {
     logger.error('Failed to start server:', error as any);
-    process.exit(1);
+    if (process.env.VERCEL !== '1') {
+      process.exit(1);
+    }
   }
 };
 
