@@ -5,8 +5,8 @@
   "description": "Backend API for export management system",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "esbuild src/server.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/index.js --packages=external",
+    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/index.js --packages=external",
     "start": "node dist/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
