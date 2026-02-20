@@ -1,11 +1,12 @@
 {
   "name": "export-management-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API for export management system",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=esm --target=node20 --outdir=dist --packages=external",
     "start": "node dist/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",

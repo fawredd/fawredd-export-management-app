@@ -1,0 +1,4 @@
+
+> export-management-backend@1.0.0 build
+> esbuild src/server.ts --bundle --platform=node --format=esm --target=node20 --outdir=dist --packages=external
+
