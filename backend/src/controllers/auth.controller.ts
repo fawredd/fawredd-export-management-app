@@ -10,10 +10,11 @@ const authService = new AuthService();
 
 export class AuthController {
   private setTokenCookie(res: Response, token: string) {
+    const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/',
     });
@@ -42,10 +43,11 @@ export class AuthController {
 
   async logout(_req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
       res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'strict',
         path: '/',
       });
       res.json({ message: 'Logged out successfully' });
