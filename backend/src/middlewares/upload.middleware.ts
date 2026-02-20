@@ -3,27 +3,41 @@ import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
 
-// Use process.cwd() for universal path resolution (works in ESM and CJS)
-const uploadsDir = path.join(process.cwd(), 'uploads/products');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const isVercel = process.env.VERCEL === '1';
+
+// ---------------------------------------------------------------------------
+// Multer storage engine: disk for local, memory for Vercel
+// ---------------------------------------------------------------------------
+
+let storage: multer.StorageEngine;
+
+if (isVercel) {
+  // Vercel: read-only filesystem → keep files in memory
+  storage = multer.memoryStorage();
+} else {
+  // Local / Docker: write to disk
+  const uploadsDir = path.join(process.cwd(), 'uploads/products');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  storage = multer.diskStorage({
+    destination: (_req: Request, _file: Express.Multer.File, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (_req: Request, file: Express.Multer.File, cb) => {
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const ext = path.extname(file.originalname);
+      const basename = path.basename(file.originalname, ext);
+      cb(null, `${basename}-${uniqueSuffix}${ext}`);
+    },
+  });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (_req: Request, _file: Express.Multer.File, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (_req: Request, file: Express.Multer.File, cb) => {
-    // Generate unique filename: timestamp-randomstring-originalname
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
-    cb(null, `${basename}-${uniqueSuffix}${ext}`);
-  },
-});
+// ---------------------------------------------------------------------------
+// File filter — images only
+// ---------------------------------------------------------------------------
 
-// File filter - only images
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -34,7 +48,10 @@ const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFil
   }
 };
 
-// Configure multer
+// ---------------------------------------------------------------------------
+// Configured multer instance
+// ---------------------------------------------------------------------------
+
 export const upload = multer({
   storage,
   fileFilter,
@@ -42,18 +59,3 @@ export const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB max file size
   },
 });
-
-// Helper to delete file
-export const deleteFile = (filePath: string): void => {
-  const fullPath = path.join(process.cwd(), 'uploads/products', path.basename(filePath));
-  if (fs.existsSync(fullPath)) {
-    fs.unlinkSync(fullPath);
-  }
-};
-
-// Helper to get public URL for uploaded file
-export const getFileUrl = (filename: string, req: Request): string => {
-  const protocol = req.protocol;
-  const host = req.get('host');
-  return `${protocol}://${host}/uploads/products/${filename}`;
-};

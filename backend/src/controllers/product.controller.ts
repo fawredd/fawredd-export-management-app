@@ -8,6 +8,7 @@ import { ProductRepository } from '../repositories/product.repository';
 import { AppError } from '../middlewares/error.middleware';
 import priceHistoryRepository from '../repositories/price-history.repository';
 import { PriceType } from '@prisma/client';
+import { getStorageProvider, isRunningOnVercel } from '../services/storage.service';
 
 const productRepository = new ProductRepository();
 
@@ -156,12 +157,23 @@ export class ProductController {
         throw new AppError(404, 'Product not found');
       }
 
-      // Generate URLs for uploaded files
-      const protocol = req.protocol;
-      const host = req.get('host');
-      const newImageUrls = files.map(
-        (file) => `${protocol}://${host}/uploads/products/${file.filename}`,
-      );
+      const storage = getStorageProvider('products');
+      const newImageUrls: string[] = [];
+
+      for (const file of files) {
+        if (isRunningOnVercel()) {
+          // Vercel: file is in memory (buffer)
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const key = `products/${uniqueSuffix}-${file.originalname}`;
+          const url = await storage.upload(key, file.buffer, file.mimetype);
+          newImageUrls.push(url);
+        } else {
+          // Local: file already written to disk by multer
+          const protocol = req.protocol;
+          const host = req.get('host');
+          newImageUrls.push(`${protocol}://${host}/uploads/products/${file.filename}`);
+        }
+      }
 
       // Update product with new image URLs
       const updatedProduct = await productRepository.update(
@@ -192,14 +204,12 @@ export class ProductController {
       }
 
       // Remove image URL from array
-      const updatedImageUrls = (product.imageUrls || []).filter((url) => url !== imageUrl);
+      const decodedUrl = decodeURIComponent(imageUrl);
+      const updatedImageUrls = (product.imageUrls || []).filter((url) => url !== decodedUrl);
 
-      // Delete physical file
-      const filename = imageUrl.split('/').pop();
-      if (filename) {
-        const { deleteFile } = await import('../middlewares/upload.middleware');
-        deleteFile(filename);
-      }
+      // Delete file via storage provider
+      const storage = getStorageProvider('products');
+      await storage.delete(decodedUrl);
 
       // Update product
       const updatedProduct = await productRepository.update(

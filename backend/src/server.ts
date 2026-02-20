@@ -70,8 +70,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+// Serve uploaded files (only on local/Docker — Vercel uses blob storage)
+if (process.env.VERCEL !== '1') {
+  app.use('/uploads', express.static('uploads'));
+}
 
 // Rate limiting
 const limiter = rateLimit({
