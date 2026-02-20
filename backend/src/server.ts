@@ -40,15 +40,17 @@ import { idempotency } from './middlewares/idempotency.middleware';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Logger setup
+// Logger setup — pino-pretty is local-only; Vercel uses plain JSON logs
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
+  ...(process.env.VERCEL !== '1' && {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+      },
     },
-  },
+  }),
 });
 
 const httpLogger = pinoHttp({ logger });
