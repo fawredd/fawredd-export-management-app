@@ -474,6 +474,32 @@ class ApiClient {
     const response = await this.client.delete(`/api/packing-lists/${id}`);
     return response.data;
   }
+
+  // Pricing endpoints
+  async calculatePricing(data: any) {
+    const response = await this.client.post('/api/pricing/calculate', data);
+    return response.data;
+  }
+
+  async calculateBatchPricing(data: any) {
+    const response = await this.client.post('/api/pricing/calculate-batch', data);
+    return response.data;
+  }
+
+  async getPricingConfig() {
+    const response = await this.client.get('/api/pricing/config');
+    return response.data;
+  }
+
+  async updatePricingConfig(data: any) {
+    const response = await this.client.put('/api/pricing/config', data);
+    return response.data;
+  }
+
+  async getIncoterms() {
+    const response = await this.client.get('/api/pricing/incoterms');
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

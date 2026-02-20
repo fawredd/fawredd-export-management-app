@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 
@@ -74,15 +74,9 @@ export interface Incoterm {
  * Hook to calculate export pricing
  */
 export function usePricingCalculator() {
-    const queryClient = useQueryClient();
-
     const calculatePricing = useMutation({
         mutationFn: async (request: PricingCalculationRequest) => {
-            const response = await apiClient.post<PricingCalculationResponse>(
-                '/pricing/calculate',
-                request
-            );
-            return response.data;
+            return apiClient.calculatePricing(request) as Promise<PricingCalculationResponse>;
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.error || 'Failed to calculate pricing');
@@ -91,11 +85,7 @@ export function usePricingCalculator() {
 
     const calculateBatch = useMutation({
         mutationFn: async (scenarios: PricingCalculationRequest[]) => {
-            const response = await apiClient.post<{ scenarios: PricingCalculationResponse[] }>(
-                '/pricing/calculate-batch',
-                { scenarios }
-            );
-            return response.data;
+            return apiClient.calculateBatchPricing({ scenarios }) as Promise<{ scenarios: PricingCalculationResponse[] }>;
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.error || 'Failed to calculate batch pricing');
@@ -116,16 +106,12 @@ export function usePricingConfig() {
 
     const { data: config, isLoading, error } = useQuery({
         queryKey: ['pricing-config'],
-        queryFn: async () => {
-            const response = await apiClient.get<PricingConfig>('/pricing/config');
-            return response.data;
-        },
+        queryFn: () => apiClient.getPricingConfig() as Promise<PricingConfig>,
     });
 
     const updateConfig = useMutation({
         mutationFn: async (updates: Partial<PricingConfig>) => {
-            const response = await apiClient.put<PricingConfig>('/pricing/config', updates);
-            return response.data;
+            return apiClient.updatePricingConfig(updates) as Promise<PricingConfig>;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pricing-config'] });
@@ -150,10 +136,7 @@ export function usePricingConfig() {
 export function useIncoterms() {
     const { data: incoterms, isLoading, error } = useQuery({
         queryKey: ['incoterms'],
-        queryFn: async () => {
-            const response = await apiClient.get<Incoterm[]>('/pricing/incoterms');
-            return response.data;
-        },
+        queryFn: () => apiClient.getIncoterms() as Promise<Incoterm[]>,
     });
 
     return {

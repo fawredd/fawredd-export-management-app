@@ -4,7 +4,6 @@ import { DropdownAppMenu } from "@/components/drop-down-menu"
 import type React from "react"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/features/auth"
-import { BackButton } from "@/components/navigation/BackButton"
 import { Loader2 } from "lucide-react"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

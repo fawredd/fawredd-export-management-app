@@ -1,19 +1,18 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { apiClient } from "@/lib/api-client"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, Share2 } from "lucide-react"
+import { Download, Share2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function BudgetDetailsPage() {
     const params = useParams()
-    const router = useRouter()
     const budgetId = params.id as string
 
     const { data: budget, isLoading } = useQuery({
@@ -101,7 +100,7 @@ export default function BudgetDetailsPage() {
                         <CardTitle className="text-sm font-medium">Incoterm</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{budget.incoterm?.name || "N/A"}</p>
+                        <p className="text-2xl font-bold">{budget.incoterm || "N/A"}</p>
                         <p className="text-sm text-muted-foreground">Delivery terms</p>
                     </CardContent>
                 </Card>
@@ -187,7 +186,7 @@ export default function BudgetDetailsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Budget Summary</CardTitle>
-                    <CardDescription>Cost breakdown by Incoterm: {budget.incoterm?.name || "N/A"}</CardDescription>
+                    <CardDescription>Cost breakdown by Incoterm: {budget.incoterm || "N/A"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {/* Products Subtotal */}
@@ -209,7 +208,7 @@ export default function BudgetDetailsPage() {
                         const localCosts = costs.filter((c: any) => !["FREIGHT", "INSURANCE"].includes(c.type)).reduce((sum: number, c: any) => sum + Number(c.value), 0)
 
                         const totalFOB = subtotal + localCosts
-                        const incotermName = budget.incoterm?.name
+                        const incotermName = budget.incoterm
 
                         if (incotermName === "EXW" || incotermName === "FCA") {
                             return (
@@ -268,7 +267,7 @@ export default function BudgetDetailsPage() {
 
                     <Separator />
                     <div className="flex justify-between font-bold text-xl">
-                        <span>Total Amount ({budget.incoterm?.name || "N/A"}):</span>
+                        <span>Total Amount ({budget.incoterm || "N/A"}):</span>
                         <span className="text-primary">
                             ${budget.totalAmount ? Number(budget.totalAmount).toFixed(2) : "0.00"}
                         </span>
