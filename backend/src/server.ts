@@ -40,6 +40,9 @@ import { idempotency } from './middlewares/idempotency.middleware';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Trust Vercel's proxy for express-rate-limit
+app.set('trust proxy', 1);
+
 // Logger setup — pino-pretty is local-only; Vercel uses plain JSON logs
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
