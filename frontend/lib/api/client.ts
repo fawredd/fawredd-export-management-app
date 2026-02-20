@@ -5,10 +5,18 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const getApiUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  // If URL is empty, strictly "/api", or matches origin, we want relative paths starting with /api
+  // Since methods already include /api, we use an empty baseURL
+  if (!url || url === '/api' || url.startsWith('/')) {
+    return '';
+  }
+  return url;
+};
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: getApiUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

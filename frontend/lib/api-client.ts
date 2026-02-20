@@ -5,14 +5,20 @@
 import { User, Product, Provider, Client, Budget, Cost } from '../shared/types';
 import axios, { AxiosInstance, AxiosError, HttpStatusCode } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const getApiUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url || url === '/api' || url.startsWith('/')) {
+    return '';
+  }
+  return url;
+};
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: getApiUrl(),
       headers: {
         'Content-Type': 'application/json',
       },
