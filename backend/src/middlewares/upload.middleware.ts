@@ -2,13 +2,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads/products');
+// Use process.cwd() for universal path resolution (works in ESM and CJS)
+const uploadsDir = path.join(process.cwd(), 'uploads/products');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -49,7 +45,7 @@ export const upload = multer({
 
 // Helper to delete file
 export const deleteFile = (filePath: string): void => {
-  const fullPath = path.join(__dirname, '../../uploads/products', path.basename(filePath));
+  const fullPath = path.join(process.cwd(), 'uploads/products', path.basename(filePath));
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);
   }
