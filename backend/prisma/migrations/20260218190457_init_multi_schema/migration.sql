@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "fawredd-foreign-budgets";
+
 -- CreateEnum
 CREATE TYPE "fawredd-foreign-budgets"."Plan" AS ENUM ('FREE', 'PRO', 'PREMIUM');
 
